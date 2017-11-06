@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package rpc;
+
+// import "google/api/annotations.proto";
+
+message Function {
+  string name = 1;
+  string lang = 2;
+  bytes code = 3;
+  bool package = 4;
+}
+
+service FnAPI {
+  rpc Create (CreateReq) returns (CreateResp) {
+    /*
+    option (google.api.http) = {
+      post: "/api/v1/functions/create"
+      body: "*"
+    };
+    */
+  }
+
+  rpc Update (UpdateReq) returns (UpdateResp) {}
+  rpc Get (GetReq) returns (GetResp) {}
+  rpc Delete (DeleteReq) returns (DeleteResp) {}
+  rpc List (ListReq) returns (ListResp) {}
+}
+
+message CreateReq {
+  rpc.Function function = 1;
+}
+
+message CreateResp {
+  string link = 1;
+}
+
+message UpdateReq {
+  rpc.Function function = 1;
+}
+
+message UpdateResp {
+  string link = 1;
+}
+
+message GetReq {
+  string name = 1;
+  bool limited = 2;
+}
+
+message GetResp {
+  rpc.Function function = 1;
+  int64 version = 2;
+  string code_link = 3;
+}
+
+message DeleteReq {
+  string name = 1;
+}
+
+message DeleteResp {
+}
+
+message ListReq {
+}
+
+message ListResp {
+  repeated string functions = 1;
+}
+

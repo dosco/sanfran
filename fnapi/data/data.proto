@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package data;
+
+message Function {
+  string name = 1;
+  string lang = 2;
+  bytes code = 3;
+  bool package = 4;
+  int64 version = 5;
+}

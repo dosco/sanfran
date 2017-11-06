@@ -1,0 +1,124 @@
+## Routing Layer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sanfran-routing-service
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  selector:
+    app: sanfran-router
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-router
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-router
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: sanfran-router
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: sanfran-router
+          image: sanfran-router:v1
+          securityContext:
+            #allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - name: grpc
+              containerPort: 8080
+
+---
+## Controller
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sanfran-controller-service
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  selector:
+    app: sanfran-controller
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-controller
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sanfran-controller
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: sanfran-controller
+          image: sanfran-controller:v1
+          securityContext:
+            #allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - name: grpc
+              containerPort: 8080
+---
+## Functions API Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sanfran-fnapi-service
+spec:
+  ports:
+  - name: http-grpc
+    port: 80
+    targetPort: 8080
+  selector:
+    app: sanfran-fnapi
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-fnapi
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-fnapi
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sanfran-fnapi
+    spec:
+      securityContext:
+        #runAsNonRoot: true
+        #runAsUser: 65534
+      containers:
+        - name: sanfran-fnapi
+          image: sanfran-fnapi:v1
+          securityContext:
+            #allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+          ports:
+            - name: http-grpc
+              containerPort: 8080

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package rpc;
+
+service Sidecar {
+  rpc Activate (ActivateReq) returns (ActivateResp) {}
+  rpc Execute (ExecuteReq) returns (ExecuteResp) {}
+  rpc Metrics (MetricsReq) returns (MetricsResp) {}
+}
+
+message ActivateReq {
+  string link = 2;
+  string code = 3;
+}
+
+message ActivateResp { }
+
+message listOfString {
+  repeated string value = 1;
+}
+
+message ExecuteReq {
+  string name = 2;
+  string method = 3;
+  map<string, listOfString> query = 4;
+  map<string, listOfString> header = 5;
+  bytes body = 6;
+}
+
+message ExecuteResp {
+  map<string, listOfString> header = 1;
+  bytes body = 2;
+}
+
+message MetricsReq { }
+
+message MetricsResp {
+  repeated float load_avg = 1;
+  float free_mem = 2;
+  double last_req = 3;
+  bool terminate = 4;
+}

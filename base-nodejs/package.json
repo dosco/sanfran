@@ -1,0 +1,12 @@
+{
+  "name": "sanfran-base-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.2",
+    "fs": "0.0.1-security"
+  }
+}

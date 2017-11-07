@@ -3,6 +3,8 @@ package main
 import (
 	"sync"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type Routes struct {
@@ -40,7 +42,7 @@ func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
 
 func (r *Routes) GetRoute(name string, version int64) (string, bool) {
 	if fr, ok := r.funcMap[name]; ok && fr.GetVersion() == version {
-		fr.WaitForRoute(100 * time.Millisecond)
+		fr.waitForRoute(5 * time.Millisecond)
 		return fr.GetHostIP()
 	}
 	return "", false
@@ -97,12 +99,12 @@ func (f *FnRoutes) GetHostIP() (string, bool) {
 
 	f.mux.Lock()
 	if len := len(f.hosts); len != 0 {
-		hostIP, ok = f.hosts[f.hIndex], true
-		f.reqCount = 0
-
-		if f.hIndex++; f.hIndex >= len {
+		if f.hIndex >= len {
 			f.hIndex = 0
 		}
+		hostIP, ok = f.hosts[f.hIndex], true
+		f.reqCount = 0
+		f.hIndex++
 	} else {
 		f.reqCount++
 	}
@@ -119,16 +121,16 @@ func (f *FnRoutes) IsEmpty() bool {
 	return len(f.hosts) == 0
 }
 
-func (f *FnRoutes) WaitForRoute(timeout time.Duration) {
+func (f *FnRoutes) waitForRoute(tick time.Duration) {
 	if len(f.hosts) != 0 || f.reqCount == 0 {
 		return
 	}
 
-	t := time.NewTicker(timeout)
-	for range t.C {
+	wait.Poll(5*time.Millisecond, 100*time.Millisecond, func() (bool, error) {
 		if len(f.hosts) != 0 {
-			break
+			return true, nil
 		}
-	}
-	t.Stop()
+		return false, nil
+	})
+
 }

@@ -54,6 +54,20 @@ module.exports = function (req, res) {
 
 While SanFran seems pretty simple, underneath it is designed to be a scalable and high performance engine to run your functions on.
 
+## Performance Benchmarks
+
+I use [https://github.com/tsenart/vegeta](Vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up cluster.
+
+```console
+$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=2s | tee results.bin | vegeta report -reporter='hist[6ms,20ms,30ms,40ms,50ms]'
+
+[6ms,   20ms]  0   0.00%
+[20ms,  30ms]  38  38.00%  ############################
+[30ms,  40ms]  30  30.00%  ######################
+[40ms,  50ms]  17  17.00%  ############
+[50ms,  +Inf]  15  15.00%  ###########
+```
+
 ## Architecture Design in Brief
 
 - Uses micro services: Router, Controller, API and Function Sidecar

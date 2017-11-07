@@ -76,6 +76,7 @@ func (f *FnRoutes) AddHost(hostIP string) {
 	}
 	if !exists {
 		f.hosts = append(f.hosts, hostIP)
+		f.reqCount = 0
 	}
 	f.mux.Unlock()
 }
@@ -102,8 +103,9 @@ func (f *FnRoutes) GetHostIP() (string, bool) {
 		if f.hIndex++; f.hIndex >= len {
 			f.hIndex = 0
 		}
+	} else {
+		f.reqCount++
 	}
-	f.reqCount++
 	f.mux.Unlock()
 
 	return hostIP, ok

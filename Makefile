@@ -11,3 +11,10 @@ docker:
 	cd sidecar && make docker
 	cd controller && make docker
 	cd router && make docker
+
+deploy:
+	kubectl apply -f sanfran.yaml
+
+undeploy:
+	kubectl delete -f sanfran.yaml && kubectl delete pod -l 'app=sanfran-func'
+

@@ -6,8 +6,8 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
-	"gitlab.com/dosco/sanfran/fnapi/data"
-	"gitlab.com/dosco/sanfran/fnapi/rpc"
+	"github.com/dosco/sanfran/fnapi/data"
+	"github.com/dosco/sanfran/fnapi/rpc"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

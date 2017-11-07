@@ -1,5 +1,5 @@
 hash: 571adf219b1bdd7d15049d14132f65a5e8b2938fc47679a674fda066b9591b83
-updated: 2017-11-06T12:18:28.222862342-05:00
+updated: 2017-11-07T01:08:20.478062187-05:00
 imports:
 - name: github.com/boltdb/bolt
   version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
@@ -34,7 +34,6 @@ imports:
   version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
   - proto
-  - protoc-gen-go/descriptor
   - ptypes
   - ptypes/any
   - ptypes/duration

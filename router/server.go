@@ -9,9 +9,9 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
-	controller "gitlab.com/dosco/sanfran/controller/rpc"
-	fnapi "gitlab.com/dosco/sanfran/fnapi/rpc"
-	sidecar "gitlab.com/dosco/sanfran/sidecar/rpc"
+	controller "github.com/dosco/sanfran/controller/rpc"
+	fnapi "github.com/dosco/sanfran/fnapi/rpc"
+	sidecar "github.com/dosco/sanfran/sidecar/rpc"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitlab.com/dosco/sanfran/fnapi/data"
+	"github.com/dosco/sanfran/fnapi/data"
 )
 
 var (

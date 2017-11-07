@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	fnapi "gitlab.com/dosco/sanfran/fnapi/rpc"
+	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 
-	controller "gitlab.com/dosco/sanfran/controller/rpc"
-	sidecar "gitlab.com/dosco/sanfran/sidecar/rpc"
+	controller "github.com/dosco/sanfran/controller/rpc"
+	sidecar "github.com/dosco/sanfran/sidecar/rpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"

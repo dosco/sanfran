@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	sidecar "gitlab.com/dosco/sanfran/sidecar/rpc"
+	sidecar "github.com/dosco/sanfran/sidecar/rpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"

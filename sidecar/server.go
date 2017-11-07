@@ -15,7 +15,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/sethgrid/pester"
-	"gitlab.com/dosco/sanfran/sidecar/rpc"
+	"github.com/dosco/sanfran/sidecar/rpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )

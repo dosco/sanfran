@@ -15,11 +15,13 @@ Run your Javascript functions on Kubernetes in a high performance environment. T
 
 ## Quickstart
 
-The easiest way to get started with SanFran is to install it using `kubectl`:
+The easiest way to get started with SanFran is to install it using `kubectl` on Minikube. Minikube is the development version of Kubernetes and instructions of installing it are later in this document:
 
 ```console
 $ git clone https://github.com/dosco/sanfran.git
 $ cd sanfran
+$ eval $(minikube docker-env)
+$ make docker
 $ kubectl apply -f sanfran.yaml
 ```
 
@@ -28,15 +30,15 @@ You will now have SanFran installed and deployed on Kubernetes
 To add your JS function, use the `cli/build/sanfran-cli` command. As an example run these commands to add a function that just returns http request headers.
 
 ```console
-$ cli/build/sanfran-cli create headers -file ../hello-nodejs/headers.js -host sanfran-fnapi-service
-$ curl curl 'http://sanfran-routing-service/fn/headers?a=hello&b=world'
+$ cli/build/sanfran-cli create headers -file hello-nodejs/headers.js -host sanfran-fnapi-service
+$ curl 'http://sanfran-routing-service/fn/headers?a=hello&b=world'
 ```
 
 You can add as many functions as you like or use 'update', 'delete' or 'list' commands with
 `cli/build/sanfran-cli` to manage existing functions. Here's another hello world example.
 
 ```console
-$ cli/build/sanfran-cli create hello -file ../hello-nodejs/hello.js -host sanfran-fnapi-service
+$ cli/build/sanfran-cli create hello -file hello-nodejs/hello.js -host sanfran-fnapi-service
 $ curl curl 'http://sanfran-routing-service/fn/hello?name=Vik'
 ```
 

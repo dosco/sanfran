@@ -9,7 +9,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
 	"github.com/soheilhy/cmux"
-	"gitlab.com/dosco/sanfran/fnapi/rpc"
+	"github.com/dosco/sanfran/fnapi/rpc"
 	"google.golang.org/grpc"
 )
 

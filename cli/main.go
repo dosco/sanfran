@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	fnapi "gitlab.com/dosco/sanfran/fnapi/rpc"
+	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	"google.golang.org/grpc"
 )
 

@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-const CODE_LINK = "http://sanfran-fnapi-service/code/%s"
+const CODE_LINK = "http://sanfran-fnapi-service/code/%s?v=%d"
 
 func functionFromReq(reqFn *rpc.Function) data.Function {
 	return data.Function{
@@ -35,7 +35,7 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 
 	glog.Infof("[%s] Function created", fn.GetName())
 
-	link := fmt.Sprintf(CODE_LINK, fn.GetName())
+	link := fmt.Sprintf(CODE_LINK, fn.GetName(), fn.GetVersion())
 	return &rpc.CreateResp{Link: link}, nil
 }
 
@@ -49,7 +49,7 @@ func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateRes
 	}
 	glog.Infof("[%s] Function updated", fn.GetName())
 
-	link := fmt.Sprintf(CODE_LINK, fn.GetName())
+	link := fmt.Sprintf(CODE_LINK, fn.GetName(), fn.GetVersion())
 	return &rpc.UpdateResp{Link: link}, nil
 }
 
@@ -63,7 +63,7 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 
 	resp := rpc.GetResp{
 		Version:  fn.GetVersion(),
-		CodeLink: fmt.Sprintf(CODE_LINK, fn.GetName()),
+		CodeLink: fmt.Sprintf(CODE_LINK, fn.GetName(), fn.GetVersion()),
 	}
 
 	if !req.GetLimited() {
@@ -75,6 +75,7 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 		}
 	}
 	glog.Infof("[%s] Function fetched", req.GetName())
+	glog.Infof("Link -> %s", resp.CodeLink)
 
 	return &resp, nil
 }

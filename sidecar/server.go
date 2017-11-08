@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dosco/sanfran/sidecar/rpc"
 	"github.com/golang/glog"
 	"github.com/sethgrid/pester"
-	"github.com/dosco/sanfran/sidecar/rpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
@@ -104,24 +104,17 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 }
 
 func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.ExecuteResp, error) {
-
 	if s.terminate {
 		return nil, fmt.Errorf("terminate = true")
 	}
 
-	var qv []string
-	for k, v := range req.Query {
-		for i := range v.Value {
-			qv = append(qv, fmt.Sprintf("%s=%s", k, v.Value[i]))
-		}
+	var reqLink string
+	if len(req.Query) != 0 {
+		reqLink = fmt.Sprintf("%s%s", appURLPrefix, buildQueryString(req))
+	} else {
+		reqLink = appURLPrefix
 	}
 
-	var query string
-	if len(qv) != 0 {
-		query = "?" + strings.Join(qv, "&")
-	}
-
-	reqLink := fmt.Sprintf("%s/%s", appURLPrefix, query)
 	httpReq, err := http.NewRequest(req.Method, reqLink, bytes.NewReader(req.GetBody()))
 	if err != nil {
 		s.terminate = true
@@ -134,7 +127,8 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 	}
 
 	httpReq.Header = http.Header{}
-	for k, v := range req.GetHeader() {
+	hdrs := req.GetHeader()
+	for k, v := range hdrs {
 		httpReq.Header[k] = v.Value
 	}
 
@@ -208,4 +202,19 @@ func (s *server) Metrics(context.Context, *rpc.MetricsReq) (*rpc.MetricsResp, er
 	s.mux.Unlock()
 
 	return resp, nil
+}
+
+func buildQueryString(req *rpc.ExecuteReq) string {
+	var qv []string
+
+	for k, v := range req.Query {
+		for i := range v.Value {
+			qv = append(qv, fmt.Sprintf("%s=%s", k, v.Value[i]))
+		}
+	}
+
+	if len(qv) != 0 {
+		return "?" + strings.Join(qv, "&")
+	}
+	return ""
 }

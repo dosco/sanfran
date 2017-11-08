@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
-	"github.com/julienschmidt/httprouter"
 	controller "github.com/dosco/sanfran/controller/rpc"
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
+	"github.com/golang/glog"
+	"github.com/julienschmidt/httprouter"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -83,15 +83,14 @@ func httpToExecuteReq(name string, r *http.Request) (*sidecar.ExecuteReq, error)
 
 	req.Header = make(map[string]*sidecar.ListOfString)
 	for k, v := range r.Header {
-		key := strings.ToLower(k)
-
-		if key == "upgrade-insecure-requests" ||
+		if key := strings.ToLower(k); key == "upgrade-insecure-requests" ||
 			key == "cache-control" ||
 			key == "pragma" {
 			continue
 		}
 		req.Header[k] = &sidecar.ListOfString{Value: v}
 	}
+	req.Header["X-Forwarded-Host"] = &sidecar.ListOfString{Value: []string{r.Host}}
 
 	req.Query = make(map[string]*sidecar.ListOfString)
 	for k, v := range r.Form {

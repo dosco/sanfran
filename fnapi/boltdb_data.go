@@ -61,3 +61,21 @@ func (d *datastore) GetFn(key string) (*data.Function, error) {
 func (d *datastore) DeleteFn(key string) error {
 	return d.delete(FN_BKT, []byte(key))
 }
+
+func (d *datastore) ListFn() ([]data.Function, error) {
+	list, err := d.list(FN_BKT)
+	if err != nil {
+		return nil, err
+	}
+
+	var fns []data.Function
+	for i := range list {
+		var fn data.Function
+		if err := fn.Unmarshal(list[i]); err != nil {
+			return nil, err
+		}
+		fns = append(fns, fn)
+	}
+
+	return fns, nil
+}

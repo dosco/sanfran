@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/golang/glog"
-	"github.com/julienschmidt/httprouter"
 	"github.com/dosco/sanfran/fnapi/data"
 	"github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/golang/glog"
+	"github.com/julienschmidt/httprouter"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -89,6 +89,20 @@ func (s *server) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.DeleteRes
 	return &rpc.DeleteResp{}, nil
 }
 
+func (s *server) List(ctx context.Context, req *rpc.ListReq) (*rpc.ListResp, error) {
+	fns, err := ds.ListFn()
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	var fnNames []string
+	for i := range fns {
+		fnNames = append(fnNames, fns[i].GetName())
+	}
+
+	return &rpc.ListResp{Names: fnNames}, nil
+}
+
 func fetchCode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fn, err := ds.GetFn(ps.ByName("name"))
 	if err != nil {
@@ -105,8 +119,4 @@ func fetchCode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-}
-
-func (s *server) List(ctx context.Context, req *rpc.ListReq) (*rpc.ListResp, error) {
-	return &rpc.ListResp{}, nil
 }

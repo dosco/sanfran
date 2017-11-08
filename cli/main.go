@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
 )
 
@@ -61,7 +61,7 @@ func main() {
 
 	conn, err := grpc.Dial(fmt.Sprintf("%s:80", host), grpc.WithInsecure())
 	if err != nil {
-		glog.Fatalln(err.Error())
+		glog.Exitln(err.Error())
 	}
 	defer conn.Close()
 	fnapiClient := fnapi.NewFnAPIClient(conn)
@@ -76,13 +76,13 @@ func main() {
 		}
 		filesToZip, err := newNodePackage(fileName)
 		if err != nil {
-			glog.Fatalln(err.Error())
+			glog.Exitln(err.Error())
 		}
 
 		baseDir := filepath.Dir(fileName) + "/"
 		zipdCode, err := buildNodePackage(baseDir, filesToZip)
 		if err != nil {
-			glog.Fatalln(err.Error())
+			glog.Exitln(err.Error())
 		}
 
 		fn := fnapi.Function{
@@ -103,10 +103,23 @@ func main() {
 		}
 
 		if err != nil {
-			glog.Fatalln(err.Error())
+			glog.Exitln(err.Error())
 		}
 
 		fmt.Printf("> http://sanfran-routing-service/fn/%s\n", name)
+	}
+
+	if action == "list" {
+		req := fnapi.ListReq{}
+		resp, err := fnapiClient.List(ctx, &req)
+		if err != nil {
+			glog.Exitln(err.Error())
+		}
+
+		fnNames := resp.GetNames()
+		for i := range fnNames {
+			fmt.Printf("%d. %s\n", (i + 1), fnNames[i])
+		}
 	}
 
 	glog.Flush()

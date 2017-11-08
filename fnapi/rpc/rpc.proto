@@ -65,6 +65,6 @@ message ListReq {
 }
 
 message ListResp {
-  repeated string functions = 1;
+  repeated string names = 1;
 }
 

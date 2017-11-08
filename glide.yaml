@@ -38,3 +38,4 @@ import:
   - kubernetes
   - tools/cache
   - tools/clientcmd
+- package: github.com/coocood/freecache

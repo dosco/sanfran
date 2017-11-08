@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+
 	"github.com/dosco/sanfran/fnapi/data"
 )
 
@@ -35,10 +37,16 @@ func (d *datastore) UpdateFn(fn *data.Function) error {
 	fn.Version = oldFn.Version + 1
 
 	// Marshal and insert record.
-	if v, err := fn.Marshal(); err != nil {
+	v, err = fn.Marshal()
+	if err != nil {
 		return err
 	} else if err := b.Put(k, v); err != nil {
 		return err
+	}
+
+	ck := bytes.Join([][]byte{FN_BKT, k}, nil)
+	if _, err := d.cache.Get(ck); err == nil {
+		d.cache.Set(ck, v, d.expiry)
 	}
 
 	return tx.Commit()

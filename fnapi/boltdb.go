@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"runtime/debug"
 
 	"github.com/boltdb/bolt"
+	"github.com/coocood/freecache"
+	"github.com/golang/glog"
 )
 
 var (
@@ -20,10 +24,12 @@ type Unmarshaler interface {
 }
 
 type datastore struct {
-	db *bolt.DB
+	db     *bolt.DB
+	cache  *freecache.Cache
+	expiry int
 }
 
-func NewDatastore() (*datastore, error) {
+func NewDatastore(cacheSize, cacheExpiry int) (*datastore, error) {
 	// Open new BoltDB database
 	db, err := bolt.Open("sanfran.db", 0600, nil)
 	if err != nil {
@@ -47,7 +53,10 @@ func NewDatastore() (*datastore, error) {
 		return nil, err
 	}
 
-	return &datastore{db: db}, nil
+	cache := freecache.NewCache(cacheSize)
+	debug.SetGCPercent(20)
+
+	return &datastore{db: db, cache: cache, expiry: cacheExpiry}, nil
 }
 
 func (d *datastore) Close() error {
@@ -95,10 +104,16 @@ func (d *datastore) update(bn []byte, k []byte, obj Marshaler) error {
 	}
 
 	// Marshal and insert record.
-	if v, err := obj.Marshal(); err != nil {
+	v, err := obj.Marshal()
+	if err != nil {
 		return err
 	} else if err := b.Put(k, v); err != nil {
 		return err
+	}
+
+	ck := bytes.Join([][]byte{bn, k}, nil)
+	if _, err := d.cache.Get(ck); err == nil {
+		d.cache.Set(ck, v, d.expiry)
 	}
 
 	return tx.Commit()
@@ -123,11 +138,22 @@ func (d *datastore) delete(bn []byte, k []byte) error {
 	if err := b.Delete(k); err != nil {
 		return err
 	}
+	ck := bytes.Join([][]byte{bn, k}, nil)
+	d.cache.Del(ck)
 
 	return tx.Commit()
 }
 
 func (d *datastore) get(bn []byte, k []byte) ([]byte, error) {
+	ck := bytes.Join([][]byte{bn, k}, nil)
+
+	// Attempt to fetch from cache
+	if v, err := d.cache.Get(ck); err != nil && err != freecache.ErrNotFound {
+		glog.Errorln(err.Error())
+	} else if v != nil && err == nil {
+		return v, nil
+	}
+
 	// Start read-write transaction.
 	tx, err := d.db.Begin(true)
 	if err != nil {
@@ -142,6 +168,7 @@ func (d *datastore) get(bn []byte, k []byte) ([]byte, error) {
 	if v == nil {
 		return nil, ErrKeyNotExists
 	}
+	d.cache.Set(ck, v, d.expiry)
 
 	if err := tx.Commit(); err != nil {
 		return nil, err

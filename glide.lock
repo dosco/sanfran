@@ -1,8 +1,10 @@
-hash: 571adf219b1bdd7d15049d14132f65a5e8b2938fc47679a674fda066b9591b83
-updated: 2017-11-07T01:08:20.478062187-05:00
+hash: c47dcfcbf03f47bbca1923459508795f7354425040f7e6b2d1bdc9804c27b8d8
+updated: 2017-11-08T02:19:54.838360192-05:00
 imports:
 - name: github.com/boltdb/bolt
   version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
+- name: github.com/coocood/freecache
+  version: a47e26eb67ac2657e4b5a62b1975bb2b65e0b8b3
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:

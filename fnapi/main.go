@@ -6,16 +6,22 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/dosco/sanfran/fnapi/rpc"
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
 	"github.com/soheilhy/cmux"
-	"github.com/dosco/sanfran/fnapi/rpc"
 	"google.golang.org/grpc"
 )
 
-const port = 8080
+const (
+	port        = 8080
+	cacheExpiry = 60                // Seconds
+	cacheSize   = 100 * 1024 * 1024 // Bytes
+)
 
-var ds *datastore
+var (
+	ds *datastore
+)
 
 func main() {
 	var err error
@@ -23,7 +29,7 @@ func main() {
 	flag.Parse()
 	defer glog.Flush()
 
-	if ds, err = NewDatastore(); err != nil {
+	if ds, err = NewDatastore(cacheSize, cacheExpiry); err != nil {
 		glog.Fatalln(err.Error())
 	}
 	defer ds.Close()

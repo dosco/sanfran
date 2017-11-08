@@ -32,6 +32,7 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 	if err := ds.CreateFn(&fn); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
+
 	glog.Infof("[%s] Function created", fn.GetName())
 
 	link := fmt.Sprintf(CODE_LINK, fn.GetName())
@@ -104,10 +105,12 @@ func (s *server) List(ctx context.Context, req *rpc.ListReq) (*rpc.ListResp, err
 }
 
 func fetchCode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	fn, err := ds.GetFn(ps.ByName("name"))
+	//TODO: Need version here
+	name := ps.ByName("name")
+
+	fn, err := ds.GetFn(name)
 	if err != nil {
-		glog.Errorln(err.Error())
-		http.Error(w, err.Error(), 500)
+		httpError(w, err)
 		return
 	}
 
@@ -115,8 +118,12 @@ func fetchCode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 
 	if _, err := w.Write(fn.GetCode()); err != nil {
-		glog.Errorln(err.Error())
-		http.Error(w, err.Error(), 500)
+		httpError(w, err)
 		return
 	}
+}
+
+func httpError(w http.ResponseWriter, err error) {
+	glog.Errorln(err.Error())
+	http.Error(w, err.Error(), 500)
 }

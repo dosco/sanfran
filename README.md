@@ -1,9 +1,10 @@
 # SanFran: Serverless Functions for Kubernetes
 
-Run your Javascript functions on Kubernetes in a high performance environment. The functions will only use resources when handling requests. Designed to minimize cold-start latency using instance pools and container recycling. Ability to scale horizontally for high QPS functions.
+Run your Javascript functions on Kubernetes in a high performance service. The functions will only use resources when handling requests. Designed to minimize cold-start latency using instance pools and container recycling. Ability to scale horizontally for high QPS functions.
 
 - JavaScript functions (with npm modules)
-- Fast spin up (minimize cold-start with container pooling and recycling)
+- Fast function spin up under 30ms ()
+- Minimize cold-start latency with pooling + recycling
 - Per function horizontal scaling
 - Easy to deploy on Kubernetes
 
@@ -56,16 +57,16 @@ While SanFran seems pretty simple, underneath it is designed to be a scalable an
 
 ## Performance Benchmarks
 
-I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube.
+I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides very high performance we aim for with this project.
 
 ```console
-$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=2s | tee results.bin | vegeta report -reporter='hist[6ms,20ms,30ms,40ms,50ms]'
-
-[6ms,   20ms]  0   0.00%
-[20ms,  30ms]  38  38.00%  ############################
-[30ms,  40ms]  30  30.00%  ######################
-[40ms,  50ms]  17  17.00%  ############
-[50ms,  +Inf]  15  15.00%  ###########
+$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=5s | tee results.bin | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'
+Bucket         #   %       Histogram
+[6ms,   8ms]   81  32.40%  ########################
+[8ms,   10ms]  67  26.80%  ####################
+[10ms,  15ms]  53  21.20%  ###############
+[15ms,  20ms]  13  5.20%   ###
+[20ms,  +Inf]  36  14.40%  ##########
 ```
 
 ## Architecture Design in Brief

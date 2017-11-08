@@ -56,7 +56,7 @@ While SanFran seems pretty simple, underneath it is designed to be a scalable an
 
 ## Performance Benchmarks
 
-I use [https://github.com/tsenart/vegeta](Vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube.
+I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube.
 
 ```console
 $ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=2s | tee results.bin | vegeta report -reporter='hist[6ms,20ms,30ms,40ms,50ms]'
@@ -79,7 +79,7 @@ $ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -durat
 
 ### Building and Developing on SanFran
 
-For local development I use Minikube so all the below steps will require it to be installed and running. [https://github.com/kubernetes/minikube](Minikube Github)
+For local development I use Minikube so all the below steps will require it to be installed and running. [Minikube Github](https://github.com/kubernetes/minikube)
 
 SanFran is written entire in GO and depends on Kubernetes among other things. All dependencies are vendored in using the `glide` tool. Just use the command `make` to build all the services and cli tool natively on your dev box. To build and deploy the SanFran containers to your local Minikube instance use the below commands.
 
@@ -132,6 +132,6 @@ $ ping sanfran-routing-service
 
 ## SanFran :heart: Developers
 
-We are working on a developers guide. So until then just get started and if you have questions feel free to reach out on Twitter [https://twitter.com/dosco](twitter.com/dosco)
+We are working on a developers guide. So until then just get started and if you have questions feel free to reach out on Twitter [twitter.com/dosco](https://twitter.com/dosco)
 
 SanFran is well-tested on Minikube

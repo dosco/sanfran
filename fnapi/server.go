@@ -75,7 +75,6 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 		}
 	}
 	glog.Infof("[%s] Function fetched", req.GetName())
-	glog.Infof("Link -> %s", resp.CodeLink)
 
 	return &resp, nil
 }

@@ -1,0 +1,10 @@
+.DS_Store
+._*
+*~
+*.db
+report.bin
+
+packages/*
+**/build
+**/node_modules
+

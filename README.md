@@ -129,3 +129,9 @@ And if you already have SanFran deployed on Minikube then use ping to see if its
 ```
 $ ping sanfran-routing-service
 ```
+
+## SanFran :heart: Developers
+
+We are working on a developers guide. So until then just get started and if you have questions feel free to reach out on Twitter (https://twitter.com/dosco)[twitter.com/dosco]
+
+SanFran is well-tested on Minikube

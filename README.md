@@ -132,6 +132,6 @@ $ ping sanfran-routing-service
 
 ## SanFran :heart: Developers
 
-We are working on a developers guide. So until then just get started and if you have questions feel free to reach out on Twitter (https://twitter.com/dosco)[twitter.com/dosco]
+We are working on a developers guide. So until then just get started and if you have questions feel free to reach out on Twitter [https://twitter.com/dosco](twitter.com/dosco)
 
 SanFran is well-tested on Minikube

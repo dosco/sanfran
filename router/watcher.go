@@ -89,12 +89,12 @@ func podUpdated(oldObj, newObj interface{}) {
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
 	options.LabelSelector = "type=sanfran-func,function"
-	return clientset.CoreV1().Pods(v1.NamespaceDefault).List(options)
+	return clientset.CoreV1().Pods(namespace).List(options)
 }
 
 func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
 	options.LabelSelector = "type=sanfran-func,function"
-	return clientset.CoreV1().Pods(v1.NamespaceDefault).Watch(options)
+	return clientset.CoreV1().Pods(namespace).Watch(options)
 }
 
 func addPod(pod *v1.Pod) {

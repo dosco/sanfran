@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
+	"github.com/golang/glog"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"
@@ -45,7 +45,7 @@ func scalePods() (*v1.PodList, error) {
 	options := metav1.ListOptions{
 		LabelSelector: "type=sanfran-func",
 	}
-	list, err := clientset.CoreV1().Pods(v1.NamespaceDefault).List(options)
+	list, err := clientset.CoreV1().Pods(namespace).List(options)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func functionScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 		delete(pod.Labels, "function")
 		delete(pod.Annotations, "version")
 
-		_, err := clientset.CoreV1().Pods(v1.NamespaceDefault).Update(pod)
+		_, err := clientset.CoreV1().Pods(namespace).Update(pod)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func deletePod(pod *v1.Pod, reason string) error {
 	mux.Unlock()
 
 	options := &metav1.DeleteOptions{}
-	err := clientset.CoreV1().Pods(v1.NamespaceDefault).Delete(pod.Name, options)
+	err := clientset.CoreV1().Pods(namespace).Delete(pod.Name, options)
 
 	glog.Infof("[%s / %s] Deleting pod (%s)\n", pod.Name, pod.Status.PodIP, reason)
 

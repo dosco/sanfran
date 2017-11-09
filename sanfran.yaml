@@ -39,6 +39,11 @@ spec:
           ports:
             - name: grpc
               containerPort: 8080
+          env:
+            - name: SANFRAN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 
 ---
 ## Controller
@@ -81,6 +86,11 @@ spec:
           ports:
             - name: grpc
               containerPort: 8080
+          env:
+            - name: SANFRAN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 ---
 ## Functions API Service
 

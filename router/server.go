@@ -17,6 +17,20 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+func initServer(port int) {
+	router := httprouter.New()
+	router.GET("/fn/:name", execFunc)
+	router.POST("/fn/:name", execFunc)
+	router.PUT("/fn/:name", execFunc)
+	router.HEAD("/fn/:name", execFunc)
+	router.DELETE("/fn/:name", execFunc)
+	router.PATCH("/fn/:name", execFunc)
+	router.OPTIONS("/fn/:name", execFunc)
+
+	glog.Infof("SanFran/Router Service, Port: %d, Namespace: %s\n", port, namespace)
+	glog.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+}
+
 func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 

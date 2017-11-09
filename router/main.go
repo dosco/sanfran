@@ -2,17 +2,17 @@ package main
 
 import (
 	"flag"
-	fmt "fmt"
-	"net/http"
+	"os"
 
 	"github.com/golang/glog"
-	"github.com/julienschmidt/httprouter"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
 	clientset *kubernetes.Clientset
+	namespace string
 )
 
 const port = 8080
@@ -39,17 +39,12 @@ func main() {
 		panic(err.Error())
 	}
 
+	if ns := os.Getenv("SANFRAN_NAMESPACE"); len(ns) != 0 {
+		namespace = ns
+	} else {
+		namespace = v1.NamespaceDefault
+	}
+
 	watchPods(clientset)
-
-	router := httprouter.New()
-	router.GET("/fn/:name", execFunc)
-	router.POST("/fn/:name", execFunc)
-	router.PUT("/fn/:name", execFunc)
-	router.HEAD("/fn/:name", execFunc)
-	router.DELETE("/fn/:name", execFunc)
-	router.PATCH("/fn/:name", execFunc)
-	router.OPTIONS("/fn/:name", execFunc)
-
-	glog.Infof("SanFran/Router Service Listening on :%d\n", port)
-	glog.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	initServer(port)
 }

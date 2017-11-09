@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/glog"
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/golang/glog"
 
 	controller "github.com/dosco/sanfran/controller/rpc"
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
@@ -26,7 +26,7 @@ func initServer(port int) {
 	g := grpc.NewServer()
 	controller.RegisterControllerServer(g, new(server))
 
-	glog.Infof("SanFran/Controller Service Listening on :%d\n", port)
+	glog.Infof("SanFran/Controller Service, Port: %d, Namespace: %s\n", port, namespace)
 	g.Serve(lis)
 }
 
@@ -100,7 +100,7 @@ func activateFunctionPod(name, version, codeLink string, pod *v1.Pod) (*v1.Pod, 
 	pod.Annotations["version"] = version
 	pod.Labels["function"] = name
 
-	updatedPod, err := clientset.CoreV1().Pods(v1.NamespaceDefault).Update(pod)
+	updatedPod, err := clientset.CoreV1().Pods(namespace).Update(pod)
 	if err != nil {
 		return nil, err
 	}

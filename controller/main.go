@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"time"
 
 	"github.com/golang/glog"
@@ -15,6 +16,7 @@ import (
 
 var (
 	clientset *kubernetes.Clientset
+	namespace string
 )
 
 const port = 8080
@@ -39,6 +41,12 @@ func main() {
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		glog.Fatalln(err.Error())
+	}
+
+	if ns := os.Getenv("SANFRAN_NAMESPACE"); len(ns) != 0 {
+		namespace = ns
+	} else {
+		namespace = v1.NamespaceDefault
 	}
 
 	watchPods(clientset)
@@ -131,7 +139,7 @@ func newFunctionPod(async bool) (*v1.Pod, error) {
 		functionPod.Annotations = map[string]string{"locked": "true"}
 	}
 
-	pod, err := clientset.CoreV1().Pods(v1.NamespaceDefault).Create(functionPod)
+	pod, err := clientset.CoreV1().Pods(namespace).Create(functionPod)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +151,7 @@ func newFunctionPod(async bool) (*v1.Pod, error) {
 	var createdPod *v1.Pod
 
 	err = wait.Poll(50*time.Millisecond, 15*time.Second, func() (bool, error) {
-		createdPod, err = clientset.CoreV1().Pods(v1.NamespaceDefault).
+		createdPod, err = clientset.CoreV1().Pods(namespace).
 			Get(pod.Name, metav1.GetOptions{})
 
 		return err == nil && verifyPodReady(createdPod), err

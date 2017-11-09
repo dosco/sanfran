@@ -1,0 +1,13 @@
+# Default values for sanfran.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+router:
+  tag: v1
+controller:
+  tag: v1
+  poolSize: 5
+sidecar:
+  tag: v1
+fnapi:
+  tag: v1

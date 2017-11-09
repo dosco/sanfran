@@ -16,17 +16,19 @@ Run your Javascript functions on Kubernetes in a high performance service. The f
 
 ## Quickstart
 
-The easiest way to get started with SanFran is to install it using `kubectl` on Minikube. Minikube is the development version of Kubernetes and instructions of installing it are later in this document:
+The easiest way to get started with SanFran is to install it using [Helm](https://github.com/kubernetes/helm) on [Minikube](https://github.com/kubernetes/minikube). Helm is a tool to help install apps on Kubernetes and Minikube is a small development version of Kubernetes.
 
 ```console
 $ git clone https://github.com/dosco/sanfran.git
 $ cd sanfran
 $ eval $(minikube docker-env)
 $ make docker
-$ kubectl apply -f sanfran.yaml
+$ helm install ./charts/sanfran/
 ```
 
-You will now have SanFran installed and deployed on Kubernetes
+You will now have SanFran installed and deployed on Kubernetes. Before you go ahead please scroll down and see the [Minikube Development Tips](#minikube-development-tips) section for connecting your host network to Minikube.
+
+## Fun With Functions
 
 To add your JS function, use the `cli/build/sanfran-cli` command. As an example run these commands to add a function that just returns http request headers.
 

@@ -1,0 +1,7 @@
+apiVersion: v1
+name: sanfran
+description: SanFran, Serverless Functions on Kubernetes
+home: https://github.com/dosco/sanfran
+sources:
+  - https://github.com/dosco/sanfran
+version: 0.1.0

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strconv"
 	"time"
 
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
@@ -16,16 +18,18 @@ import (
 
 var (
 	autoScalePods chan *v1.Pod
+	podPoolSize   int
 )
 
 const (
-	MAX_READY_PODS = 3
+	poolSizeConfig = "/etc/sanfran-config/controller.poolsize"
 )
 
 func autoScaler(clientset *kubernetes.Clientset) {
-	autoScalePods = make(chan *v1.Pod, 100)
+	podPoolSize = 3
+	autoScalePods = make(chan *v1.Pod, 300)
 
-	for w := 1; w <= 5; w++ {
+	for w := 1; w <= 10; w++ {
 		go autoScaleWorker(autoScalePods)
 	}
 
@@ -57,7 +61,19 @@ func scalePods() (*v1.PodList, error) {
 		autoScalePods <- &list.Items[i]
 	}
 
-	for i := getReadyPodQueueSize(); i < MAX_READY_PODS; i++ {
+	if i, err := strconv.Atoi(readConfig(poolSizeConfig)); err != nil {
+		glog.Errorln(err.Error())
+	} else {
+		podPoolSize = i
+	}
+
+	queueSize := getReadyPodQueueSize()
+	if queueSize < podPoolSize {
+		msg := "Scaling up from %d pods (Pool Size: %d)"
+		glog.Infoln(fmt.Sprintf(msg, queueSize, podPoolSize))
+	}
+
+	for i := queueSize; i < podPoolSize; i++ {
 		if pod, err := newFunctionPod(true); err != nil {
 			glog.Error(err.Error())
 		} else {
@@ -117,8 +133,11 @@ func podScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 		return deletePod(pod, "Marked for termination")
 	}
 
-	if (resp.LastReq == 0 || resp.LastReq > 300) && getReadyPodQueueSize() > MAX_READY_PODS {
-		return deletePod(pod, "Scaling down")
+	queueSize := getReadyPodQueueSize()
+
+	if (resp.LastReq == 0 || resp.LastReq > 300) && queueSize > podPoolSize {
+		msg := "Scaling down from %d pods (Pool Size: %d)"
+		return deletePod(pod, fmt.Sprintf(msg, queueSize, podPoolSize))
 	}
 
 	return nil
@@ -160,4 +179,13 @@ func getReadyPodQueueSize() int {
 	len := len(podSet)
 	mux.Unlock()
 	return len
+}
+
+func readConfig(fn string) string {
+	if s, err := ioutil.ReadFile(fn); err != nil {
+		glog.Errorln(err.Error())
+	} else {
+		return string(s)
+	}
+	return ""
 }

@@ -32,7 +32,7 @@ spec:
         runAsUser: 65534
       containers:
         - name: sanfran-router
-          image: sanfran-router:v1
+          image: sanfran-router:{{ .Values.router.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -48,6 +48,13 @@ spec:
 ---
 ## Controller
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sanfran-config
+data:
+  controller.poolsize: "{{ .Values.controller.poolSize }}"
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -79,7 +86,7 @@ spec:
         runAsUser: 65534
       containers:
         - name: sanfran-controller
-          image: sanfran-controller:v1
+          image: sanfran-controller:{{ .Values.controller.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -91,6 +98,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/sanfran-config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: sanfran-config
 ---
 ## Functions API Service
 
@@ -125,7 +139,7 @@ spec:
         #runAsUser: 65534
       containers:
         - name: sanfran-fnapi
-          image: sanfran-fnapi:v1
+          image: sanfran-fnapi:{{ .Values.fnapi.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             #readOnlyRootFilesystem: true

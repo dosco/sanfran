@@ -1,11 +1,12 @@
 # SanFran: Serverless Functions for Kubernetes
 
-Run your Javascript functions on Kubernetes in a high performance service. The functions will only use resources when handling requests. Designed to minimize cold-start latency using instance pools and container recycling. Ability to scale horizontally for high QPS functions.
+Run your Javascript functions on Kubernetes in a high performance serverless engine.  Functions will only use resources when handling requests. Designed to minimize cold-start latency and scale horizontally for high traffic functions.
 
-- JavaScript functions (with npm modules)
-- Fast function spin up under 30ms ()
+- Runs any JavaScript function (with npm modules)
+- Very fast function spin up under 30ms
 - Minimize cold-start latency with pooling + recycling
 - Per function horizontal scaling
+- Create, update, delete functions instantly
 - Easy to deploy on Kubernetes
 
 ## The SanFran Technology Stack
@@ -59,7 +60,7 @@ While SanFran seems pretty simple, underneath it is designed to be a scalable an
 
 ## Performance Benchmarks
 
-I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides very high performance we aim for with this project.
+I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides the high performance we aim for with this project.
 
 ```console
 $ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=5s | tee results.bin | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'

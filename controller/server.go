@@ -27,6 +27,8 @@ func initServer(port int) {
 	controller.RegisterControllerServer(g, new(server))
 
 	glog.Infof("SanFran/Controller Service, Port: %d, Namespace: %s\n", port, namespace)
+	glog.Infof("Name: %s, UID: %s\n", getControllerName(), getControllerUID())
+
 	g.Serve(lis)
 }
 
@@ -48,7 +50,7 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 	pod := getNextPod()
 
 	if pod == nil {
-		if pod, err = newFunctionPod(false); err != nil {
+		if pod, err = createFunctionPod(false); err != nil {
 			return nil, err
 		}
 		glog.Infof("[%s / %s / %s:%s] Creating a new pod\n", pod.Name,

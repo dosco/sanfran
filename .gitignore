@@ -3,6 +3,7 @@
 *~
 *.db
 report.bin
+results.bin
 
 packages/*
 **/build

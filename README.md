@@ -6,6 +6,7 @@ Run your Javascript functions on Kubernetes in a high performance serverless eng
 - Very fast function spin up under 30ms
 - Minimize cold-start latency with pooling + recycling
 - Per function horizontal scaling
+- SanFran itself can horizontally scale for larger deployments
 - Create, update, delete functions instantly
 - Easy to deploy on Kubernetes
 
@@ -106,7 +107,7 @@ It helps to make the IP's inside the Minikube cluster / vm accessible for your d
 ```console
 $ sudo route -n add 10.0.0.0/24 $(minikube ip)
 $ sudo route -n add 172.17.0.0/16 $(minikube ip)
-$ sudo ifconfig bridge100 -hostfilter $(ifconfig 'bridge100' | grep member | awk '{print $2}’)
+$ sudo ifconfig bridge100 -hostfilter $(ifconfig 'bridge100' | grep member | awk '{print $2}')
 ```
 
 And then add the MiniKube DNS to your host.

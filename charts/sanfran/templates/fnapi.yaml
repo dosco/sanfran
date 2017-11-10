@@ -1,0 +1,41 @@
+## Functions API Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sanfran-fnapi-service
+spec:
+  ports:
+  - name: http-grpc
+    port: 80
+    targetPort: 8080
+  selector:
+    app: sanfran-fnapi
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-fnapi
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-fnapi
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sanfran-fnapi
+    spec:
+      securityContext:
+        #runAsNonRoot: true
+        #runAsUser: 65534
+      containers:
+        - name: sanfran-fnapi
+          image: sanfran/fnapi:{{ .Values.fnapi.tag }}
+          securityContext:
+            #allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+          ports:
+            - name: http-grpc
+              containerPort: 8080

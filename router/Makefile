@@ -8,4 +8,4 @@ run:
 	go run *.go -kubeconfig=$(HOME)/.kube/config -logtostderr
 
 docker: default.linux
-	docker build -t sanfran-router:v1 .
+	docker build -t sanfran/router:v1 .

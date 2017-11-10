@@ -11,4 +11,4 @@ rpc.pb.go:
 	protoc rpc/rpc.proto --gofast_out=plugins=grpc:.
 
 docker: default.linux
-	docker build -t sanfran-controller:v1 .
+	docker build -t sanfran/controller:v1 .

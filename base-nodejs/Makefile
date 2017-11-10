@@ -1,2 +1,2 @@
 docker:
-	docker build -t sanfran-base-nodejs:v1 .
+	docker build -t sanfran/base-nodejs:v1 .

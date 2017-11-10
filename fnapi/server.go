@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-const CODE_LINK = "http://sanfran-fnapi-service/code/%s?v=%d"
+const CODE_LINK = "http://sanfran-fnapi-cache-service/code/%s?v=%d"
 
 func functionFromReq(reqFn *rpc.Function) data.Function {
 	return data.Function{

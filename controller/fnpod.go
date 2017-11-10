@@ -45,7 +45,7 @@ func newFunctionPod() *v1.Pod {
 
 	containerExecute := v1.Container{
 		Name:  "function-container",
-		Image: "sanfran-base-nodejs:v1",
+		Image: "sanfran/base-nodejs:v1",
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: true},
 		},
@@ -66,7 +66,7 @@ func newFunctionPod() *v1.Pod {
 
 	containerSidecar := v1.Container{
 		Name:  "sidecar-container",
-		Image: "sanfran-sidecar:v1",
+		Image: "sanfran/sidecar:v1",
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: false},
 		},
@@ -74,18 +74,20 @@ func newFunctionPod() *v1.Pod {
 		Resources:       containerSidecarResources,
 	}
 
-	managingController := true
-	blockOwnerDeletion := true
-	ownerReferences := []metav1.OwnerReference{
-		{
-			APIVersion:         "SanFran/v1",
-			Kind:               "SanFranController",
-			Name:               getControllerName(),
-			UID:                getControllerUID(),
-			Controller:         &managingController,
-			BlockOwnerDeletion: &blockOwnerDeletion,
-		},
-	}
+	/*
+		managingController := true
+		blockOwnerDeletion := true
+		ownerReferences := []metav1.OwnerReference{
+			{
+				APIVersion:         "SanFran/v1",
+				Kind:               "",
+				Name:               getControllerName(),
+				UID:                getControllerUID(),
+				Controller:         &managingController,
+				BlockOwnerDeletion: &blockOwnerDeletion,
+			},
+		}
+	*/
 
 	labels := map[string]string{
 		"type":       "sanfran-func",
@@ -94,9 +96,9 @@ func newFunctionPod() *v1.Pod {
 
 	functionPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName:    "sanfran-pod-",
-			Labels:          labels,
-			OwnerReferences: ownerReferences,
+			GenerateName: "sanfran-pod-",
+			Labels:       labels,
+			//OwnerReferences: ownerReferences,
 		},
 		Spec: v1.PodSpec{
 			RestartPolicy:   v1.RestartPolicyNever,

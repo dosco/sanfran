@@ -25,4 +25,4 @@ data.pb.go:
 	data/data.proto
 
 docker: default.linux
-	docker build -t sanfran-fnapi:v1 .
+	docker build -t sanfran/fnapi:v1 .

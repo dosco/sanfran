@@ -6,9 +6,12 @@ router:
   tag: v1
 controller:
   tag: v1
-  poolSize: 5
-  instances: 2
+  poolSize: 3
+  instances: 1
 sidecar:
   tag: v1
 fnapi:
   tag: v1
+fnapiCache:
+  tag: v1
+  instances: 1

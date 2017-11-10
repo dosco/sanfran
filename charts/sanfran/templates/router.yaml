@@ -1,0 +1,47 @@
+## Routing Layer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sanfran-routing-service
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  selector:
+    app: sanfran-router
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-router
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-router
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: sanfran-router
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: sanfran-router
+          image: sanfran/router:{{ .Values.router.tag }}
+          securityContext:
+            #allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - name: grpc
+              containerPort: 8080
+          env:
+            - name: SANFRAN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace

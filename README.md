@@ -64,7 +64,7 @@ While SanFran seems pretty simple, underneath it is designed to be a scalable an
 I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides the high performance we aim for with this project.
 
 ```console
-$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=5s | tee results.bin | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'
+$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=5s | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'
 Bucket         #   %       Histogram
 [6ms,   8ms]   81  32.40%  ########################
 [8ms,   10ms]  67  26.80%  ####################

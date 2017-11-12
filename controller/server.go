@@ -115,21 +115,9 @@ func activateFunctionPod(name, version, codeLink string, pod *v1.Pod) (*v1.Pod, 
 }
 
 func getFunction(name string, limited bool) (*fnapi.GetResp, error) {
-	conn, err := grpc.Dial("sanfran-fnapi-service:80", grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	c := fnapi.NewFnAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
 	defer cancel()
 
 	req := fnapi.GetReq{Name: name, Limited: limited}
-	resp, err := c.Get(ctx, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return fnapiClient.Get(ctx, &req)
 }

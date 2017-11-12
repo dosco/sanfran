@@ -4,6 +4,7 @@
 
 router:
   tag: v1
+  instances: 1
 controller:
   tag: v1
   poolSize: 3

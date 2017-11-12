@@ -8,19 +8,6 @@ data:
   controller.poolsize: "{{ .Values.controller.poolSize }}"
 
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: sanfran-controller-service
-spec:
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-  selector:
-    app: sanfran-controller
-
----
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:

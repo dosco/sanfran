@@ -4,6 +4,9 @@ import (
 	"flag"
 	"os"
 
+	controller "github.com/dosco/sanfran/controller/rpc"
+	fnapi "github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/dosco/sanfran/lib/clb"
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -13,6 +16,9 @@ import (
 var (
 	clientset *kubernetes.Clientset
 	namespace string
+
+	controllerClient controller.ControllerClient
+	fnapiClient      fnapi.FnAPIClient
 )
 
 const port = 8080
@@ -20,7 +26,9 @@ const port = 8080
 func main() {
 	var kubeconfig string
 
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to kubeconfig containing embeded authinfo.")
+	flag.StringVar(&kubeconfig, "kubeconfig", "",
+		"Path to kubeconfig containing embeded authinfo.")
+
 	flag.Parse()
 	defer glog.Flush()
 
@@ -45,6 +53,15 @@ func main() {
 		namespace = v1.NamespaceDefault
 	}
 
-	watchPods(clientset)
-	initServer(port)
+	lb := clb.NewClb(clientset,
+		[]string{"sanfran-controller", "sanfran-fnapi"}, namespace)
+
+	controllerClient = controller.NewControllerClient(
+		lb.RoundRobinClientConn("sanfran-controller"))
+
+	fnapiClient = fnapi.NewFnAPIClient(
+		lb.RoundRobinClientConn("sanfran-fnapi"))
+
+	watchPods()
+	httpd(port)
 }

@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-func initServer(port int) {
+func httpd(port int) {
 	router := httprouter.New()
 	router.GET("/fn/:name", execFunc)
 	router.POST("/fn/:name", execFunc)
@@ -34,7 +34,7 @@ func initServer(port int) {
 func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 
-	fn, err := GetFunction(name, true)
+	fn, err := getFunction(name, true)
 	if grpc.Code(err) == codes.NotFound {
 		http.NotFound(w, r)
 		return
@@ -47,7 +47,7 @@ func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if !ok {
 		glog.Infof("Route Not Found: %s, %d, %s\n", name, version, ip)
 
-		resp, err := NewFunctionPod(name)
+		resp, err := newFunctionPod(name)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -131,38 +131,18 @@ func executeRespToHttp(resp *sidecar.ExecuteResp, w http.ResponseWriter) error {
 	return err
 }
 
-func NewFunctionPod(name string) (*controller.NewFunctionPodResp, error) {
-	conn, err := grpc.Dial("sanfran-controller-service:80", grpc.WithInsecure())
-	if err != nil {
-		glog.Fatalln(err.Error())
-	}
-	defer conn.Close()
-	cc := controller.NewControllerClient(conn)
-
+func newFunctionPod(name string) (*controller.NewFunctionPodResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	req := &controller.NewFunctionPodReq{Name: name}
-
-	return cc.NewFunctionPod(ctx, req)
+	return controllerClient.NewFunctionPod(ctx, req)
 }
 
-func GetFunction(name string, limited bool) (*fnapi.GetResp, error) {
-	conn, err := grpc.Dial("sanfran-fnapi-service:80", grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	c := fnapi.NewFnAPIClient(conn)
+func getFunction(name string, limited bool) (*fnapi.GetResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
 	req := fnapi.GetReq{Name: name, Limited: limited}
-	resp, err := c.Get(ctx, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return fnapiClient.Get(ctx, &req)
 }

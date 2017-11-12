@@ -90,7 +90,7 @@ func newFunctionPod() *v1.Pod {
 	*/
 
 	labels := map[string]string{
-		"type":       "sanfran-func",
+		"app":        "sanfran-func",
 		"controller": getControllerName(),
 	}
 

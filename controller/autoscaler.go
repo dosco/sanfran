@@ -44,9 +44,7 @@ func autoScaler(clientset *kubernetes.Clientset) {
 }
 
 func scalePods() (*v1.PodList, error) {
-	options := metav1.ListOptions{
-		LabelSelector: "type=sanfran-func",
-	}
+	options := metav1.ListOptions{LabelSelector: "app=sanfran-func"}
 	list, err := clientset.CoreV1().Pods(namespace).List(options)
 	if err != nil {
 		return nil, err

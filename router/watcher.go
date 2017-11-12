@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -19,7 +18,7 @@ var (
 	routes        Routes
 )
 
-func watchPods(clientset *kubernetes.Clientset) cache.Indexer {
+func watchPods() {
 	routes = NewRoutes()
 	resyncPeriod := 30 * time.Minute
 
@@ -41,8 +40,6 @@ func watchPods(clientset *kubernetes.Clientset) cache.Indexer {
 
 	stop := make(chan struct{})
 	go podController.Run(stop)
-
-	return podIndexer
 }
 
 func podAdded(obj interface{}) {
@@ -88,12 +85,12 @@ func podUpdated(oldObj, newObj interface{}) {
 }
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
-	options.LabelSelector = "type=sanfran-func,function"
+	options.LabelSelector = "app=sanfran-func,function"
 	return clientset.CoreV1().Pods(namespace).List(options)
 }
 
 func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
-	options.LabelSelector = "type=sanfran-func,function"
+	options.LabelSelector = "app=sanfran-func,function"
 	return clientset.CoreV1().Pods(namespace).Watch(options)
 }
 

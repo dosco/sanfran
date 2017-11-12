@@ -22,7 +22,7 @@ spec:
   selector:
     matchLabels:
       app: sanfran-router
-  replicas: 2
+  replicas:  {{ .Values.router.instances }}
   template:
     metadata:
       labels:

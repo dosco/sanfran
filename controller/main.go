@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 
+	fnapi "github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/dosco/sanfran/lib/clb"
 	"github.com/golang/glog"
 
 	"k8s.io/client-go/kubernetes"
@@ -12,6 +14,8 @@ import (
 var (
 	clientset *kubernetes.Clientset
 	namespace string
+
+	fnapiClient fnapi.FnAPIClient
 )
 
 const port = 8080
@@ -39,6 +43,9 @@ func main() {
 	}
 
 	namespace = getNamespace()
+
+	lb := clb.NewClb(clientset, []string{"sanfran-fnapi"}, namespace)
+	fnapiClient = fnapi.NewFnAPIClient(lb.RoundRobinClientConn("sanfran-fnapi"))
 
 	watchPods(clientset)
 	autoScaler(clientset)

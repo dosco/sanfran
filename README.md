@@ -28,7 +28,7 @@ $ make docker
 $ helm install ./charts/sanfran/
 ```
 
-You will now have SanFran installed and deployed on Kubernetes. Before you go ahead please scroll down and see the [Minikube Development Tips](#minikube-development-tips) section for connecting your host network to Minikube.
+You will now have SanFran installed and deployed on Kubernetes. Before you go ahead please scroll down and see the [Minikube Setup Guide](#minikube-setup-guide) section for connecting your host network to Minikube.
 
 ## Fun With Functions
 
@@ -77,9 +77,11 @@ Bucket         #   %       Histogram
 
 - Uses micro services: Router, Controller, API and Function Sidecar
 - GRPC for efficient communication between services
+- Client side GRPC load balancing between internal micro-services
 - BoltDB for internal datastore
 - Autoscaler for maintaining a pool of ready pods
 - Pods activated with functions are downgraded and recycled when not in use
+- All micro-services can be scaled horizontally for large deployments
 - Keep the design simple and focus on performance, efficiency and extensibility
 
 ### Building and Developing on SanFran
@@ -100,7 +102,7 @@ $ cd router
 $ make run
 ```
 
-### Minikube Development Tips
+### Minikube Setup Guide
 
 It helps to make the IP's inside the Minikube cluster / vm accessible for your development host (Mac Laptop). The below commands will setup MacOS routing to allow for this.
 

@@ -124,13 +124,13 @@ func podUpdated(oldObj, newObj interface{}) {
 }
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
-	selector := "type=sanfran-func,controller=%s,!function"
+	selector := "app=sanfran-func,controller=%s,!function"
 	options.LabelSelector = fmt.Sprintf(selector, getControllerName())
 	return clientset.CoreV1().Pods(namespace).List(options)
 }
 
 func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
-	selector := "type=sanfran-func,controller=%s,!function"
+	selector := "app=sanfran-func,controller=%s,!function"
 	options.LabelSelector = fmt.Sprintf(selector, getControllerName())
 	return clientset.CoreV1().Pods(namespace).Watch(options)
 }

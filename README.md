@@ -20,15 +20,18 @@ Run your Javascript functions on Kubernetes in a high performance serverless eng
 
 The easiest way to get started with SanFran is to install it using [Helm](https://github.com/kubernetes/helm) on [Minikube](https://github.com/kubernetes/minikube). Helm is a tool to help install apps on Kubernetes and Minikube is a small development version of Kubernetes.
 
+### 1. Install and Setup Minikube
+
+[Minikube & Helm Quick Setup](#minikube-setup-guide)
+
+### 2. Download, compile and deploy SanFran
+
 ```console
 $ git clone https://github.com/dosco/sanfran.git
 $ cd sanfran
-$ eval $(minikube docker-env)
 $ make docker
 $ helm install ./charts/sanfran/
 ```
-
-You will now have SanFran installed and deployed on Kubernetes. Before you go ahead please scroll down and see the [Minikube Setup Guide](#minikube-setup-guide) section for connecting your host network to Minikube.
 
 ## Fun With Functions
 
@@ -64,7 +67,7 @@ While SanFran seems pretty simple, underneath it is designed to be a scalable an
 I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides the high performance we aim for with this project.
 
 ```console
-$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=5s | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'
+$ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -duration=15s | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'
 Bucket         #   %       Histogram
 [6ms,   8ms]   81  32.40%  ########################
 [8ms,   10ms]  67  26.80%  ####################
@@ -103,6 +106,33 @@ $ make run
 ```
 
 ### Minikube Setup Guide
+
+Minikube is a tool that makes it easy to run Kubernetes locally. Minikube runs a single-node Kubernetes cluster inside a VM on your laptop for users looking to try out Kubernetes or develop with it day-to-day.
+
+#### Install Minikube (On Mac)
+
+```console
+$ brew cask install minikube
+$ brew install docker-machine-driver-xhyve
+$ sudo chown root:wheel $(brew --prefix)/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve
+$ sudo chmod u+s $(brew --prefix)/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve
+```
+
+#### Start Minikube
+
+```console
+$ minikube start --vm-driver=xhyve
+$ eval $(minikube docker-env)
+```
+
+### Install Helm (Kubernetes Package Manager)
+
+```console
+$ brew install kubernetes-helm
+$ helm init
+```
+
+#### Connect your machine to the Minikube cluster
 
 It helps to make the IP's inside the Minikube cluster / vm accessible for your development host (Mac Laptop). The below commands will setup MacOS routing to allow for this.
 

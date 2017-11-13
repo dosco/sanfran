@@ -7,7 +7,7 @@ router:
   instances: 1
 controller:
   tag: v1
-  poolSize: 3
+  poolSize: 1
   instances: 1
 sidecar:
   tag: v1

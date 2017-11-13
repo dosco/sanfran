@@ -15,7 +15,8 @@ var (
 	clientset *kubernetes.Clientset
 	namespace string
 
-	fnapiClient fnapi.FnAPIClient
+	fnapiClient  fnapi.FnAPIClient
+	fnapiCacheLB clb.Balancer
 )
 
 const port = 8080
@@ -44,10 +45,17 @@ func main() {
 
 	namespace = getNamespace()
 
-	lb := clb.NewClb(clientset, []string{"sanfran-fnapi"}, namespace)
-	fnapiClient = fnapi.NewFnAPIClient(lb.RoundRobinClientConn("sanfran-fnapi"))
+	lb := clb.NewClb(clientset,
+		[]string{"sanfran-fnapi:http-grpc", "sanfran-fnapi-cache:http"}, namespace)
+
+	fnapiClient = fnapi.NewFnAPIClient(lb.ClientConn("sanfran-fnapi"))
+	fnapiCacheLB = clb.HttpRoundRobin(lb)
+
+	if err := fnapiCacheLB.Start("sanfran-fnapi-cache"); err != nil {
+		glog.Fatalln(err.Error())
+	}
 
 	watchPods(clientset)
 	autoScaler(clientset)
-	initServer(port)
+	grpcd(port, lb)
 }

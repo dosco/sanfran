@@ -51,7 +51,7 @@ message GetReq {
 message GetResp {
   rpc.Function function = 1;
   int64 version = 2;
-  string code_link = 3;
+  string code_path = 3;
 }
 
 message DeleteReq {

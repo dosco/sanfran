@@ -1,18 +1,5 @@
 ## Functions API Code Cache Service
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: sanfran-fnapi-cache-service
-spec:
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-  selector:
-    app: sanfran-fnapi-cache
-
----
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:

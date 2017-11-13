@@ -54,13 +54,13 @@ func main() {
 	}
 
 	lb := clb.NewClb(clientset,
-		[]string{"sanfran-controller", "sanfran-fnapi"}, namespace)
+		[]string{"sanfran-controller:grpc", "sanfran-fnapi:http-grpc"}, namespace)
 
 	controllerClient = controller.NewControllerClient(
-		lb.RoundRobinClientConn("sanfran-controller"))
+		lb.ClientConn("sanfran-controller"))
 
 	fnapiClient = fnapi.NewFnAPIClient(
-		lb.RoundRobinClientConn("sanfran-fnapi"))
+		lb.ClientConn("sanfran-fnapi"))
 
 	watchPods()
 	httpd(port)

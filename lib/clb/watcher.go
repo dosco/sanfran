@@ -3,7 +3,6 @@ package clb
 import (
 	"net"
 	"strconv"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc/naming"
@@ -51,7 +50,7 @@ func (clb *Clb) podAdded(obj interface{}) {
 	}
 
 	target := pod.Labels["app"]
-	addr := hostPort(pod, clb.portName)
+	addr := hostPort(pod, clb.ports[target])
 	op := naming.Add
 
 	if pod.GetDeletionTimestamp() != nil {
@@ -69,7 +68,7 @@ func (clb *Clb) podDeleted(obj interface{}) {
 	glog.Infof("[%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
 
 	target := pod.Labels["app"]
-	addr := hostPort(pod, clb.portName)
+	addr := hostPort(pod, clb.ports[target])
 	clb.updates[target] <- []*naming.Update{{Op: naming.Delete, Addr: addr}}
 }
 
@@ -85,7 +84,7 @@ func (clb *Clb) podUpdated(oldObj, newObj interface{}) {
 	}
 
 	target := newPod.Labels["app"]
-	addr := hostPort(newPod, clb.portName)
+	addr := hostPort(newPod, clb.ports[target])
 	op := naming.Add
 
 	if newPod.GetDeletionTimestamp() != nil {
@@ -135,7 +134,7 @@ func hostPort(pod *v1.Pod, portName string) string {
 func findPort(pod *v1.Pod, portName string) string {
 	for i := range pod.Spec.Containers {
 		for _, port := range pod.Spec.Containers[i].Ports {
-			if strings.Contains(port.Name, portName) {
+			if port.Name == portName {
 				return strconv.Itoa(int(port.ContainerPort))
 			}
 		}

@@ -5,7 +5,7 @@ kind: ConfigMap
 metadata:
   name: sanfran-config
 data:
-  controller.poolsize: "{{ .Values.controller.poolSize }}"
+  controller.poolsize: {{ .Values.controller.poolSize | quote }}
 
 ---
 apiVersion: apps/v1beta1
@@ -27,7 +27,7 @@ spec:
         runAsUser: 65534
       containers:
         - name: sanfran-controller
-          image: sanfran/controller:{{ .Values.controller.tag }}
+          image: dosco/sanfran-controller:{{ .Values.controller.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -35,6 +35,10 @@ spec:
             - name: grpc
               containerPort: 8080
           env:
+            - name: SANFRAN_FN_LANG_IMAGE
+              value: "dosco/sanfran-nodejs:{{ .Values.nodeJS.tag }}"
+            - name: SANFRAN_SIDECAR_IMAGE
+              value: "dosco/sanfran-sidecar:{{ .Values.sidecar.tag }}"
             - name: SANFRAN_NAMESPACE
               valueFrom:
                 fieldRef:

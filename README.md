@@ -30,7 +30,7 @@ The easiest way to get started with SanFran is to install it using [Helm](https:
 $ git clone https://github.com/dosco/sanfran.git
 $ cd sanfran
 $ make docker
-$ helm install ./charts/sanfran/
+$ helm install ./helm-chart/sanfran/
 ```
 
 ## Fun With Functions

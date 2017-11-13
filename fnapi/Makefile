@@ -1,3 +1,5 @@
+image = dosco/sanfran-fnapi:0.1
+
 default: rpc.pb.go data.pb.go
 	go build -o build/sanfran-fnapi .
 
@@ -25,4 +27,7 @@ data.pb.go:
 	data/data.proto
 
 docker: default.linux
-	docker build -t sanfran/fnapi:v1 .
+	docker build -t $(image) .
+
+docker-push:
+	docker push $(image)

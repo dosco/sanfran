@@ -1,3 +1,5 @@
+image = dosco/sanfran-router:0.1
+
 default:
 	go build -o build/sanfran-router .
 
@@ -8,4 +10,7 @@ run:
 	go run *.go -kubeconfig=$(HOME)/.kube/config -logtostderr
 
 docker: default.linux
-	docker build -t sanfran/router:v1 .
+	docker build -t $(image) .
+
+docker-push:
+	docker push $(image)

@@ -32,10 +32,17 @@ spec:
         #runAsUser: 65534
       containers:
         - name: sanfran-fnapi
-          image: sanfran/fnapi:{{ .Values.fnapi.tag }}
+          image: dosco/sanfran-fnapi:{{ .Values.fnapi.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             #readOnlyRootFilesystem: true
           ports:
             - name: http-grpc
               containerPort: 8080
+          volumeMounts:
+            - name: sanfran-fnapi-pv
+              mountPath: /data
+      volumes:
+        - name: sanfran-fnapi-pv
+          hostPath:
+            path: "/data/sanfran-fnapi-pv/"

@@ -45,7 +45,7 @@ func newFunctionPod() *v1.Pod {
 
 	containerExecute := v1.Container{
 		Name:  "function-container",
-		Image: "sanfran/base-nodejs:v1",
+		Image: getFnLangImage(),
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: true},
 		},
@@ -66,7 +66,7 @@ func newFunctionPod() *v1.Pod {
 
 	containerSidecar := v1.Container{
 		Name:  "sidecar-container",
-		Image: "sanfran/sidecar:v1",
+		Image: getSidecarImage(),
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: false},
 		},

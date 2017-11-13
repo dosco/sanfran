@@ -1,3 +1,5 @@
+image = dosco/sanfran-controller:0.1
+
 default: rpc.pb.go
 	go build -o build/sanfran-controller .
 
@@ -11,4 +13,7 @@ rpc.pb.go:
 	protoc rpc/rpc.proto --gofast_out=plugins=grpc:.
 
 docker: default.linux
-	docker build -t sanfran/controller:v1 .
+	docker build -t $(image) .
+
+docker-push:
+	docker push $(image)

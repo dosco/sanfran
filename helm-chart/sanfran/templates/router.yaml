@@ -33,7 +33,7 @@ spec:
         runAsUser: 65534
       containers:
         - name: sanfran-router
-          image: sanfran/router:{{ .Values.router.tag }}
+          image: dosco/sanfran-router:{{ .Values.router.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

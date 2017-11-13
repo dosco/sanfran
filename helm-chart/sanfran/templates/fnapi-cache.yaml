@@ -19,7 +19,7 @@ spec:
         #runAsUser: 65534
       containers:
         - name: sanfran-fnapi-cache
-          image: sanfran/fnapi-cache:{{ .Values.fnapiCache.tag }}
+          image: dosco/sanfran-fnapi-cache:{{ .Values.fnapiCache.tag }}
           securityContext:
             #allowPrivilegeEscalation: false
             #readOnlyRootFilesystem: true

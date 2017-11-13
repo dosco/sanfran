@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"os"
 	"runtime/debug"
 
 	"github.com/boltdb/bolt"
@@ -30,8 +31,16 @@ type datastore struct {
 }
 
 func NewDatastore(cacheSize, cacheExpiry int) (*datastore, error) {
+	var dbFile string
+
+	if s, err := os.Stat("/data"); os.IsExist(err) && s.IsDir() {
+		dbFile = "/data/sanfran.db"
+	} else {
+		dbFile = "sanfran.db"
+	}
+
 	// Open new BoltDB database
-	db, err := bolt.Open("sanfran.db", 0600, nil)
+	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
 		return nil, err
 	}

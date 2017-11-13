@@ -4,7 +4,6 @@
 *.db
 report.bin
 results.bin
-*.tgz
 
 packages/*
 **/build

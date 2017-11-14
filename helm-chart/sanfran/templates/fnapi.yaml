@@ -39,10 +39,10 @@ spec:
           ports:
             - name: http-grpc
               containerPort: 8080
-          volumeMounts:
-            - name: sanfran-fnapi-pv
-              mountPath: /data
-      volumes:
-        - name: sanfran-fnapi-pv
-          hostPath:
-            path: "/data/sanfran-fnapi-pv/"
+          {{- if eq .Values.k8s.type "gke" }}
+          {{- include "fnapi-volume-mounts" . | indent 10 }}
+          {{- end}}
+
+      {{- if eq .Values.k8s.type "gke" }}
+      {{- include "fnapi-volumes" . | indent 7 }}
+      {{- end}}

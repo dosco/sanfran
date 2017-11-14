@@ -1,0 +1,13 @@
+{{- define "fnapi-volume-mounts" }}
+volumeMounts:
+  - name: sanfran-fnapi-pv
+    mountPath: /data
+{{- end }}
+
+{{- define "fnapi-volumes" }}
+volumes:
+  - name: sanfran-fnapi-pv
+    gcePersistentDisk:
+      pdName: sanfran-fnapi-pv
+      fsType: ext4
+{{- end }}

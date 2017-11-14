@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	autoScalePods chan *v1.Pod
-	podPoolSize   int
+	autoScalePods      chan *v1.Pod
+	podPoolSize        int
+	totalReadyPodCount int
 )
 
 const (
@@ -50,22 +51,25 @@ func scalePods() (*v1.PodList, error) {
 		return nil, err
 	}
 
+	totalReadyPodCount = 0
 	for i, pod := range list.Items {
 		if pod.GetDeletionTimestamp() != nil {
 			continue
+		}
+		if _, ok := pod.Labels["function"]; ok == false {
+			totalReadyPodCount++
 		}
 		autoScalePods <- &list.Items[i]
 	}
 
 	podPoolSize = getPoolSize(defaultPoolSize)
-	queueSize := getReadyPodQueueSize()
 
-	if queueSize < podPoolSize {
+	if totalReadyPodCount < podPoolSize {
 		msg := "Scaling up from %d pods (Pool Size: %d)"
 		glog.Infoln(fmt.Sprintf(msg, queueSize, podPoolSize))
 	}
 
-	for i := queueSize; i < podPoolSize; i++ {
+	for i := totalReadyPodCount; i < podPoolSize; i++ {
 		if pod, err := createFunctionPod(true); err != nil {
 			glog.Error(err.Error())
 		} else {
@@ -125,9 +129,7 @@ func podScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 		return deletePod(pod, "Marked for termination")
 	}
 
-	queueSize := getReadyPodQueueSize()
-
-	if (resp.LastReq == 0 || resp.LastReq > 300) && queueSize > podPoolSize {
+	if (resp.LastReq == 0 || resp.LastReq > 300) && totalReadyPodCount > podPoolSize {
 		msg := "Scaling down from %d pods (Pool Size: %d)"
 		return deletePod(pod, fmt.Sprintf(msg, queueSize, podPoolSize))
 	}
@@ -164,11 +166,4 @@ func fetchMetrics(pod *v1.Pod) (*sidecar.MetricsResp, error) {
 
 	req := &sidecar.MetricsReq{}
 	return sidecarClient.Metrics(ctx, req)
-}
-
-func getReadyPodQueueSize() int {
-	mux.Lock()
-	len := len(podSet)
-	mux.Unlock()
-	return len
 }

@@ -44,5 +44,5 @@ spec:
           {{- end}}
 
       {{- if eq .Values.k8s.type "gke" }}
-      {{- include "fnapi-volumes" . | indent 7 }}
+      {{- include "fnapi-volumes" . | indent 6 }}
       {{- end}}

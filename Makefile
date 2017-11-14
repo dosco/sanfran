@@ -3,7 +3,7 @@ default:
 	cd sidecar && make
 	cd controller && make
 	cd router && make
-	cd cli && make
+	go build -o cli/build/sanfran-cli .
 
 docker:
 	cd hello-nodejs && npm install
@@ -13,7 +13,6 @@ docker:
 	cd sidecar && make docker
 	cd controller && make docker
 	cd router && make docker
-	cd cli && make
 
 deploy:
 	kubectl apply -f sanfran.yaml

@@ -16,6 +16,14 @@ Run your Javascript functions on Kubernetes in a high performance serverless eng
 
 - SanFran :heart: Kubernetes: SanFran is Kubernetes-native. It's built entirely on Kubernetes with a custom controller to manage function spin-up and shutdown.
 
+## Quickest Start
+
+Provided you have a Kubernetes cluster and Helm installed on it.
+
+```console
+$ helm install https://raw.githubusercontent.com/dosco/sanfran/master/helm-chart/sanfran-0.1.0.tgz
+```
+
 ## Quickstart
 
 The easiest way to get started with SanFran is to install it using [Helm](https://github.com/kubernetes/helm) on [Minikube](https://github.com/kubernetes/minikube). Helm is a tool to help install apps on Kubernetes and Minikube is a small development version of Kubernetes.
@@ -26,10 +34,19 @@ The easiest way to get started with SanFran is to install it using [Helm](https:
 
 ### 2. Download, compile and deploy SanFran
 
+Install Go Dependency Manager Glide
+
 ```console
-$ git clone https://github.com/dosco/sanfran.git
-$ cd sanfran
+$ go get github.com/Masterminds/glide
+```
+
+Then compile and install SanFran
+
+```console
+$ go get https://github.com/dosco/sanfran.git
+$ cd $GOPATH/src/github.com/dosco/sanfran
 $ make docker
+$ glide install
 $ helm install ./helm-chart/sanfran/
 ```
 

@@ -1,0 +1,51 @@
+hash: c47dcfcbf03f47bbca1923459508795f7354425040f7e6b2d1bdc9804c27b8d8
+updated: 2017-11-14T12:20:18.648013-05:00
+imports:
+- name: github.com/boltdb/bolt
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
+- name: github.com/coocood/freecache
+  version: a47e26eb67ac2657e4b5a62b1975bb2b65e0b8b3
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/golang/protobuf
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
+  subpackages:
+  - proto
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/sethgrid/pester
+  version: 0af5bab1e1ea2860c5aef8e77427bab011d774d8
+- name: github.com/soheilhy/cmux
+  version: bb79a83465015a27a175925ebd155e660f55e9f1
+- name: golang.org/x/net
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  subpackages:
+  - context
+- name: google.golang.org/genproto
+  version: ee236bd376b077c7a89f260c026c4735b195e459
+  subpackages:
+  - googleapis/api/annotations
+- name: google.golang.org/grpc
+  version: 5ffe3083946d5603a0578721101dc8165b1d5b5f
+  subpackages:
+  - codes
+- name: k8s.io/api
+  version: 6c6dac0277229b9e9578c5ca3f74a4345d35cdc2
+  subpackages:
+  - core/v1
+- name: k8s.io/apimachinery
+  version: 019ae5ada31de202164b118aee88ee2d14075c31
+  subpackages:
+  - pkg/api/meta
+  - pkg/api/resource
+  - pkg/apis/meta/v1
+  - pkg/runtime
+  - pkg/util/wait
+  - pkg/watch
+- name: k8s.io/client-go
+  version: 2ae454230481a7cb5544325e12ad7658ecccd19b
+  subpackages:
+  - kubernetes
+  - tools/cache
+  - tools/clientcmd
+testImports: []

@@ -3,6 +3,7 @@ default:
 	cd sidecar && make
 	cd controller && make
 	cd router && make
+	cd janitor && make
 	go build -o cli/build/sanfran-cli .
 
 docker:
@@ -13,6 +14,7 @@ docker:
 	cd sidecar && make docker
 	cd controller && make docker
 	cd router && make docker
+	cd janitor && make docker
 
 deploy:
 	kubectl apply -f sanfran.yaml

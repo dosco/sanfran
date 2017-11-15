@@ -74,21 +74,6 @@ func newFunctionPod() *v1.Pod {
 		Resources:       containerSidecarResources,
 	}
 
-	/*
-		managingController := true
-		blockOwnerDeletion := true
-		ownerReferences := []metav1.OwnerReference{
-			{
-				APIVersion:         "SanFran/v1",
-				Kind:               "",
-				Name:               getControllerName(),
-				UID:                getControllerUID(),
-				Controller:         &managingController,
-				BlockOwnerDeletion: &blockOwnerDeletion,
-			},
-		}
-	*/
-
 	labels := map[string]string{
 		"app":        "sanfran-func",
 		"controller": getControllerName(),
@@ -98,7 +83,6 @@ func newFunctionPod() *v1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "sanfran-pod-",
 			Labels:       labels,
-			//OwnerReferences: ownerReferences,
 		},
 		Spec: v1.PodSpec{
 			RestartPolicy:   v1.RestartPolicyNever,

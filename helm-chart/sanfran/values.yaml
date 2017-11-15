@@ -20,3 +20,6 @@ fnapi:
 fnapiCache:
   tag: 0.1
   instances: 1
+janitor:
+  tag: 0.1
+  schedule: "*/30 * * * *"

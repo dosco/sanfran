@@ -32,11 +32,14 @@ message ExecuteResp {
   bytes body = 2;
 }
 
-message MetricsReq { }
+message MetricsReq {
+  bool from_controller = 1;
+}
 
 message MetricsResp {
   repeated float load_avg = 1;
   float free_mem = 2;
   double last_req = 3;
-  bool terminate = 4;
+  double last_ping = 4;
+  bool terminate = 5;
 }

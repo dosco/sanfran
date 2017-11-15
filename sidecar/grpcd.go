@@ -21,14 +21,16 @@ import (
 )
 
 type server struct {
-	lastReqTS time.Time
-	terminate bool
-	mux       sync.Mutex
+	lastReqTS  time.Time
+	lastPingTS time.Time
+	terminate  bool
+	mux        sync.Mutex
 }
 
 const (
-	appURLPrefix = "http://localhost:8081"
-	funcPath     = "/shared/func"
+	orphanAfterMin = 10
+	appURLPrefix   = "http://localhost:8081"
+	funcPath       = "/shared/func"
 )
 
 func initServer(port int) {
@@ -38,7 +40,9 @@ func initServer(port int) {
 	}
 	g := grpc.NewServer()
 
-	server := &server{lastReqTS: time.Now()}
+	t := time.Now()
+	server := &server{lastReqTS: t, lastPingTS: t}
+
 	rpc.RegisterSidecarServer(g, server)
 
 	glog.Infof("SanFran/Sidecar Service Listening on :%d\n", port)
@@ -97,7 +101,9 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 	}
 
 	s.mux.Lock()
-	s.lastReqTS = time.Now()
+	t := time.Now()
+	s.lastReqTS = t
+	s.lastPingTS = t
 	s.mux.Unlock()
 
 	return &rpc.ActivateResp{}, nil
@@ -166,7 +172,7 @@ type metrics struct {
 	FreeMem float32   `json:"free_mem"`
 }
 
-func (s *server) Metrics(context.Context, *rpc.MetricsReq) (*rpc.MetricsResp, error) {
+func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.MetricsResp, error) {
 	if s.terminate {
 		return &rpc.MetricsResp{Terminate: true}, nil
 	}
@@ -193,11 +199,16 @@ func (s *server) Metrics(context.Context, *rpc.MetricsReq) (*rpc.MetricsResp, er
 	}
 
 	s.mux.Lock()
+	t := time.Now()
 	resp := &rpc.MetricsResp{
 		LoadAvg:   m.LoadAvg,
 		FreeMem:   m.FreeMem,
-		LastReq:   time.Now().Sub(s.lastReqTS).Seconds(),
+		LastReq:   t.Sub(s.lastReqTS).Seconds(),
+		LastPing:  t.Sub(s.lastPingTS).Seconds(),
 		Terminate: false,
+	}
+	if req.GetFromController() {
+		s.lastPingTS = t
 	}
 	s.mux.Unlock()
 

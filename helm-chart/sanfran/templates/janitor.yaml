@@ -1,0 +1,16 @@
+## Janitor Cron Job
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: sanfran-janitor
+spec:
+  schedule: {{ .Values.janitor.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: sanfran-janitor
+            image: dosco/sanfran-janitor:{{ .Values.janitor.tag }}
+          restartPolicy: OnFailure

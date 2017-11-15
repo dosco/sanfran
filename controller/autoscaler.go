@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"time"
 
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
@@ -45,18 +46,24 @@ func autoScaler(clientset *kubernetes.Clientset) {
 }
 
 func scalePods() (*v1.PodList, error) {
-	options := metav1.ListOptions{LabelSelector: "app=sanfran-func"}
+	selector := "app=sanfran-func,controller=%s"
+	options := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf(selector, getControllerName())}
+
 	list, err := clientset.CoreV1().Pods(namespace).List(options)
 	if err != nil {
 		return nil, err
 	}
 
 	totalReadyPodCount = 0
-	for i, pod := range list.Items {
+	for i := range list.Items {
+		pod := &list.Items[i]
+
 		if pod.GetDeletionTimestamp() != nil {
 			continue
 		}
-		if _, ok := pod.Labels["function"]; ok == false {
+
+		if !hasExitedContainers(pod) && !isActivatedPod(pod) {
 			totalReadyPodCount++
 		}
 		autoScalePods <- &list.Items[i]
@@ -66,7 +73,7 @@ func scalePods() (*v1.PodList, error) {
 
 	if totalReadyPodCount < podPoolSize {
 		msg := "Scaling up from %d pods (Pool Size: %d)"
-		glog.Infoln(fmt.Sprintf(msg, queueSize, podPoolSize))
+		glog.Infoln(fmt.Sprintf(msg, totalReadyPodCount, podPoolSize))
 	}
 
 	for i := totalReadyPodCount; i < podPoolSize; i++ {
@@ -82,18 +89,18 @@ func scalePods() (*v1.PodList, error) {
 
 func autoScaleWorker(pods <-chan *v1.Pod) {
 	for pod := range pods {
-		cs := pod.Status.ContainerStatuses
-		if len(cs) == 2 && (cs[0].State.Terminated != nil || cs[1].State.Terminated != nil) {
+		if hasExitedContainers(pod) {
 			deletePod(pod, "Terminated containers")
 			continue
 		}
 
 		resp, err := fetchMetrics(pod)
 		if err != nil {
+			glog.Warning(err.Error())
 			continue
 		}
 
-		if _, ok := pod.Labels["function"]; ok {
+		if isActivatedPod(pod) {
 			err = functionScalingLogic(resp, pod)
 		} else {
 			err = podScalingLogic(resp, pod)
@@ -101,7 +108,6 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 
 		if err != nil {
 			glog.Error(err.Error())
-			continue
 		}
 
 		glog.Infof("[%s / %s] %s\n", pod.Name, pod.Status.PodIP, resp)
@@ -131,7 +137,7 @@ func podScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 
 	if (resp.LastReq == 0 || resp.LastReq > 300) && totalReadyPodCount > podPoolSize {
 		msg := "Scaling down from %d pods (Pool Size: %d)"
-		return deletePod(pod, fmt.Sprintf(msg, queueSize, podPoolSize))
+		return deletePod(pod, fmt.Sprintf(msg, totalReadyPodCount, podPoolSize))
 	}
 
 	return nil
@@ -153,17 +159,30 @@ func deletePod(pod *v1.Pod, reason string) error {
 }
 
 func fetchMetrics(pod *v1.Pod) (*sidecar.MetricsResp, error) {
-	podHostPort := fmt.Sprintf("%s:8080", pod.Status.PodIP)
-	conn, err := grpc.Dial(podHostPort, grpc.WithInsecure())
+	hostPort := net.JoinHostPort(pod.Status.PodIP, "8080")
+	conn, err := grpc.Dial(hostPort, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
 	sidecarClient := sidecar.NewSidecarClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
 
-	req := &sidecar.MetricsReq{}
+	req := &sidecar.MetricsReq{FromController: true}
 	return sidecarClient.Metrics(ctx, req)
+}
+
+func hasExitedContainers(pod *v1.Pod) bool {
+	cs := pod.Status.ContainerStatuses
+
+	return len(cs) != 2 ||
+		cs[0].State.Terminated != nil ||
+		cs[1].State.Terminated != nil
+}
+
+func isActivatedPod(pod *v1.Pod) bool {
+	_, ok := pod.Labels["function"]
+	return ok
 }

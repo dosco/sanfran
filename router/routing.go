@@ -1,22 +1,29 @@
 package main
 
 import (
+	"net"
 	"sync"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type Routes struct {
 	funcMap map[string]*FnRoutes
+	conns   map[string]*grpc.ClientConn
 	mux     sync.Mutex
 }
 
 func NewRoutes() Routes {
-	return Routes{funcMap: make(map[string]*FnRoutes)}
+	return Routes{
+		funcMap: make(map[string]*FnRoutes),
+		conns:   make(map[string]*grpc.ClientConn),
+	}
 }
 
-func (r *Routes) AddRoute(name string, version int64, hostIP string) {
+func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.ClientConn {
 	r.mux.Lock()
 	if fr, ok := r.funcMap[name]; !ok {
 		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
@@ -25,7 +32,14 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) {
 	} else if fr.GetVersion() == version {
 		fr.AddHost(hostIP)
 	}
+
+	conn, ok := r.testConn(hostIP)
+	if !ok {
+		r.setupConn(hostIP)
+	}
 	r.mux.Unlock()
+
+	return conn
 }
 
 func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
@@ -36,16 +50,62 @@ func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
 		if fr.IsEmpty() {
 			delete(r.funcMap, name)
 		}
+
+		if _, ok := r.testConn(hostIP); !ok {
+			delete(r.conns, hostIP)
+		}
 	}
 	r.mux.Unlock()
 }
 
-func (r *Routes) GetRoute(name string, version int64) (string, bool) {
-	if fr, ok := r.funcMap[name]; ok && fr.GetVersion() == version {
-		fr.waitForRoute(5 * time.Millisecond)
-		return fr.GetHostIP()
+func (r *Routes) GetConn(name string, version int64) (*grpc.ClientConn, bool) {
+	if f, ok := r.funcMap[name]; ok && f.GetVersion() == version {
+		f.waitForRoute(5 * time.Millisecond)
+
+		hostIP, ok := f.GetHostIP()
+		if !ok {
+			return nil, false
+		}
+
+		conn, ok := r.testConn(hostIP)
+		if !ok {
+			return r.setupConn(hostIP)
+		}
+
+		return conn, ok
 	}
-	return "", false
+
+	return nil, false
+}
+
+func (r *Routes) testConn(hostIP string) (*grpc.ClientConn, bool) {
+	if c, ok := r.conns[hostIP]; ok && c != nil {
+		s := c.GetState()
+
+		if s == connectivity.TransientFailure ||
+			s == connectivity.Shutdown {
+			c.Close()
+			return nil, false
+		}
+		return c, true
+	}
+	return nil, false
+}
+
+func (r *Routes) setupConn(hostIP string) (*grpc.ClientConn, bool) {
+	if c, ok := r.conns[hostIP]; ok && c != nil {
+		c.Close()
+	}
+
+	hp := net.JoinHostPort(hostIP, "8080")
+	conn, err := grpc.Dial(hp, grpc.WithInsecure())
+	if err != nil {
+		conn.Close()
+		r.conns[hostIP] = nil
+		return nil, false
+	}
+	r.conns[hostIP] = conn
+	return conn, true
 }
 
 type FnRoutes struct {
@@ -58,14 +118,15 @@ type FnRoutes struct {
 }
 
 func NewFnRoutes(name string, version int64, hostIP string) *FnRoutes {
-	r := FnRoutes{
+	f := &FnRoutes{
 		name:     name,
 		version:  version,
 		hosts:    []string{hostIP},
 		hIndex:   0,
 		reqCount: 0,
 	}
-	return &r
+
+	return f
 }
 
 func (f *FnRoutes) AddHost(hostIP string) {

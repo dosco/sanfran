@@ -5,7 +5,7 @@ kind: Service
 metadata:
   name: sanfran-routing-service
   annotations:
-+    cloud.google.com/load-balancer-type: "Internal"
+    cloud.google.com/load-balancer-type: "Internal"
 spec:
   type: LoadBalancer
   ports:

@@ -43,26 +43,19 @@ func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	version := fn.GetVersion()
-	ip, ok := routes.GetRoute(name, version)
+	conn, ok := routes.GetConn(name, version)
 	if !ok {
-		glog.Infof("Route Not Found: %s, %d, %s\n", name, version, ip)
+		glog.Infof("Route Not Found: %s, %d\n", name, version)
 
 		resp, err := newFunctionPod(name)
 		if err != nil {
 			panic(err.Error())
 		}
 		routes.AddRoute(name, version, resp.GetPodIP())
-		ip = resp.GetPodIP()
+		conn, ok = routes.GetConn(name, version)
 	}
 
-	glog.Infof("Function Route: %s, %d, %s\n", name, version, ip)
-
-	podHostPort := fmt.Sprintf("%s:8080", ip)
-	conn, err := grpc.Dial(podHostPort, grpc.WithInsecure())
-	if err != nil {
-		panic(err.Error())
-	}
-	defer conn.Close()
+	glog.Infof("Function Route: %s, %d\n", name, version)
 
 	sc := sidecar.NewSidecarClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -75,7 +68,6 @@ func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	resp, err := sc.Execute(ctx, req)
 	if err != nil {
-		routes.DeleteRoute(name, version, ip)
 		panic(err.Error())
 	}
 

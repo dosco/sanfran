@@ -6,6 +6,8 @@ metadata:
   name: sanfran-janitor
 spec:
   schedule: {{ .Values.janitor.schedule | quote }}
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
       template:

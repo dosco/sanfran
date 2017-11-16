@@ -16,6 +16,15 @@ docker:
 	cd router && make docker
 	cd janitor && make docker
 
+docker-push:
+	cd base-nodejs && npm install && make docker-push
+	cd fnapi && make docker-push
+	cd fnapi-cache && make docker-push
+	cd sidecar && make docker-push
+	cd controller && make docker-push
+	cd router && make docker-push
+	cd janitor && make docker-push
+
 deploy:
 	kubectl apply -f sanfran.yaml
 

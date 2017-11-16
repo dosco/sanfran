@@ -4,6 +4,8 @@
 
 k8s:
   type: "minikube"
+  services:
+    type: "ClusterIP"
 nodeJS:
   tag: 0.1
 router:

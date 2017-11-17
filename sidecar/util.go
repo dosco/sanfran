@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,8 +14,14 @@ import (
 	"github.com/sethgrid/pester"
 )
 
+const (
+	zipExt       = ".zip"
+	functionFile = "function.js"
+)
+
 func activateFromCode(funcPath, code string) error {
-	out, err := os.Create(funcPath + "/function.js")
+	fname := filepath.Join(funcPath, functionFile)
+	out, err := os.Create(fname)
 	if err != nil {
 		return err
 	}
@@ -42,10 +49,25 @@ func activateFromLink(funcPath, link string) error {
 		return err
 	}
 
-	r := bytes.NewReader(body)
-	len := int64(len(body))
-	if _, err := unZip(r, len, funcPath); err != nil {
+	url, err := url.Parse(link)
+	if err != nil {
 		return err
+	}
+
+	if strings.Contains(url.Path, zipExt) {
+		r := bytes.NewReader(body)
+		len := int64(len(body))
+
+		if _, err := unZip(r, len, funcPath); err != nil {
+			return err
+		}
+	} else {
+		fname := filepath.Join(funcPath, functionFile)
+
+		err := ioutil.WriteFile(fname, body, os.FileMode(0777))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -34,7 +34,7 @@ func httpd(port int) {
 func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 
-	fn, err := getFunction(name, true)
+	fn, err := getFunction(name)
 	if grpc.Code(err) == codes.NotFound {
 		http.NotFound(w, r)
 		return
@@ -131,10 +131,10 @@ func newFunctionPod(name string) (*controller.NewFunctionPodResp, error) {
 	return controllerClient.NewFunctionPod(ctx, req)
 }
 
-func getFunction(name string, limited bool) (*fnapi.GetResp, error) {
+func getFunction(name string) (*fnapi.GetResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	req := fnapi.GetReq{Name: name, Limited: limited}
+	req := fnapi.GetReq{Name: name}
 	return fnapiClient.Get(ctx, &req)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
@@ -9,7 +10,14 @@ import (
 
 func fetchCode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	//TODO: Need version here
-	name := ps.ByName("name")
+	nameParam := ps.ByName("name")
+
+	if len(nameParam) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+	p := strings.Split(nameParam, ".")
+	name := p[0]
 
 	fn, err := ds.GetFn(name)
 	if err != nil {

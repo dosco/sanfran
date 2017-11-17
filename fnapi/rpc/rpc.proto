@@ -53,7 +53,6 @@ message CreateReq {
 }
 
 message CreateResp {
-  string link = 1;
 }
 
 message UpdateReq {
@@ -61,18 +60,17 @@ message UpdateReq {
 }
 
 message UpdateResp {
-  string link = 1;
 }
 
 message GetReq {
   string name = 1;
-  bool limited = 2;
 }
 
 message GetResp {
-  rpc.Function function = 1;
-  int64 version = 2;
-  string code_path = 3;
+  string name = 1;
+  string lang = 2;
+  int64 version = 3;
+  string code_path = 4;
 }
 
 message DeleteReq {

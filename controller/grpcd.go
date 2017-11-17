@@ -43,7 +43,7 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 		return nil, fmt.Errorf("No 'name' specified")
 	}
 
-	fn, err := getFunction(name, true)
+	fn, err := getFunction(name)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +124,10 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	return updatedPod, nil
 }
 
-func getFunction(name string, limited bool) (*fnapi.GetResp, error) {
+func getFunction(name string) (*fnapi.GetResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
 	defer cancel()
 
-	req := fnapi.GetReq{Name: name, Limited: limited}
+	req := fnapi.GetReq{Name: name}
 	return fnapiClient.Get(ctx, &req)
 }

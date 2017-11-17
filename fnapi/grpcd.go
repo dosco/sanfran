@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/dosco/sanfran/fnapi/data"
 	"github.com/dosco/sanfran/fnapi/rpc"
@@ -23,9 +24,7 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 	}
 
 	glog.Infof("[%s] Function created", fn.GetName())
-
-	link := fmt.Sprintf(codePath, fn.GetName(), fn.GetVersion())
-	return &rpc.CreateResp{Link: link}, nil
+	return &rpc.CreateResp{}, nil
 }
 
 func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateResp, error) {
@@ -38,8 +37,7 @@ func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateRes
 	}
 	glog.Infof("[%s] Function updated", fn.GetName())
 
-	link := fmt.Sprintf(codePath, fn.GetName(), fn.GetVersion())
-	return &rpc.UpdateResp{Link: link}, nil
+	return &rpc.UpdateResp{}, nil
 }
 
 func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error) {
@@ -50,21 +48,17 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
+	codePath := fmt.Sprintf(codePath,
+		functionFilename(fn), fn.GetVersion())
+
 	resp := rpc.GetResp{
+		Name:     fn.GetName(),
+		Lang:     fn.GetLang(),
 		Version:  fn.GetVersion(),
-		CodePath: fmt.Sprintf(codePath, fn.GetName(), fn.GetVersion()),
+		CodePath: codePath,
 	}
 
-	if !req.GetLimited() {
-		resp.Function = &rpc.Function{
-			Name:    fn.GetName(),
-			Lang:    fn.GetLang(),
-			Code:    fn.GetCode(),
-			Package: fn.GetPackage(),
-		}
-	}
 	glog.Infof("[%s] Function fetched", req.GetName())
-
 	return &resp, nil
 }
 
@@ -74,8 +68,8 @@ func (s *server) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.DeleteRes
 	} else if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	glog.Infof("[%s] Function deleted", req.GetName())
 
+	glog.Infof("[%s] Function deleted", req.GetName())
 	return &rpc.DeleteResp{}, nil
 }
 
@@ -100,4 +94,13 @@ func functionFromReq(reqFn *rpc.Function) data.Function {
 		Code:    reqFn.GetCode(),
 		Package: reqFn.GetPackage(),
 	}
+}
+
+func functionFilename(fn *data.Function) string {
+	filename := []string{fn.GetName(), fn.GetLang()}
+	if fn.GetPackage() {
+		filename = append(filename, "zip")
+	}
+
+	return strings.Join(filename, ".")
 }

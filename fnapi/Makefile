@@ -1,12 +1,12 @@
 image = dosco/sanfran-fnapi:0.1
 
-default: rpc.pb.go data.pb.go
+default: rpc.pb.go rpc.pb.gw.go data.pb.go
 	go build -o build/sanfran-fnapi .
 
-default.linux: rpc.pb.go data.pb.go
+default.linux: rpc.pb.go rpc.pb.gw.go data.pb.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/sanfran-fnapi .
 
-run: rpc.pb.go data.pb.go
+run: rpc.pb.go rpc.pb.gw.go data.pb.go
 	go run *.go -logtostderr
 
 rpc.pb.go:
@@ -19,6 +19,7 @@ rpc.pb.gw.go:
 	protoc -I/usr/local/include -I. \
   -I$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
   --grpc-gateway_out=logtostderr=true:. \
+	--swagger_out=logtostderr=true:. \
   rpc/rpc.proto
 
 data.pb.go:

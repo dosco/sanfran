@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package rpc;
 
-// import "google/api/annotations.proto";
+import "google/api/annotations.proto";
 
 message Function {
   string name = 1;
@@ -13,18 +13,39 @@ message Function {
 
 service FnAPI {
   rpc Create (CreateReq) returns (CreateResp) {
-    /*
     option (google.api.http) = {
-      post: "/api/v1/functions/create"
+      post: "/api/v1/fn/create"
       body: "*"
     };
-    */
   }
 
-  rpc Update (UpdateReq) returns (UpdateResp) {}
-  rpc Get (GetReq) returns (GetResp) {}
-  rpc Delete (DeleteReq) returns (DeleteResp) {}
-  rpc List (ListReq) returns (ListResp) {}
+  rpc Update (UpdateReq) returns (UpdateResp) {
+     option (google.api.http) = {
+      post: "/api/v1/fn/update"
+      body: "*"
+    };
+  }
+
+  rpc Get (GetReq) returns (GetResp) {
+     option (google.api.http) = {
+      post: "/api/v1/fn/get"
+      body: "*"
+    };
+  }
+
+  rpc Delete (DeleteReq) returns (DeleteResp) {
+    option (google.api.http) = {
+      post: "/api/v1/fn/delete"
+      body: "*"
+    };
+  }
+
+  rpc List (ListReq) returns (ListResp) {
+    option (google.api.http) = {
+      post: "/api/v1/fn/list"
+      body: "*"
+    };
+  }
 }
 
 message CreateReq {

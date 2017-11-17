@@ -9,12 +9,12 @@ import (
 	"github.com/dosco/sanfran/fnapi/rpc"
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
-	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
 
 const (
-	port        = 8080
+	grpcPort    = 8080
+	httpPort    = 8081
 	cacheExpiry = 60                // Seconds
 	cacheSize   = 100 * 1024 * 1024 // Bytes
 )
@@ -34,25 +34,26 @@ func main() {
 	}
 	defer ds.Close()
 
+	httpS := httprouter.New()
+	httpS.GET("/:name", fetchCode)
+
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%d", httpPort), httpS)
+		if err != nil {
+			glog.Fatalf(err.Error())
+		}
+	}()
+
 	grpcS := grpc.NewServer()
 	rpc.RegisterFnAPIServer(grpcS, new(server))
 
-	httpR := httprouter.New()
-	httpR.GET("/code/:name", fetchCode)
-	httpS := &http.Server{Handler: httpR}
-
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port)) // RPC port
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort)) // RPC port
 	if err != nil {
 		glog.Fatalf(err.Error())
 	}
 
-	m := cmux.New(lis)
-	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	httpL := m.Match(cmux.HTTP1Fast())
+	glog.Infof("SanFran/FnAPI GRPC Service Listening on :%d\n", grpcPort)
+	glog.Infof("SanFran/FnAPI HTTP Service Listening on :%d\n", httpPort)
 
-	go grpcS.Serve(grpcL)
-	go httpS.Serve(httpL)
-
-	glog.Infof("SanFran/FnAPI HTTP Service Listening on :%d\n", port)
-	m.Serve()
+	grpcS.Serve(l)
 }

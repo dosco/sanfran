@@ -46,7 +46,7 @@ func main() {
 	namespace = getNamespace()
 
 	lb := clb.NewClb(clientset,
-		[]string{"sanfran-fnapi:http-grpc", "sanfran-fnapi-cache:http"}, namespace)
+		[]string{"sanfran-fnapi:grpc", "sanfran-fnapi-cache:http"}, namespace)
 
 	fnapiClient = fnapi.NewFnAPIClient(lb.ClientConn("sanfran-fnapi"))
 	fnapiCacheLB = clb.HttpRoundRobin(lb)

@@ -55,16 +55,16 @@ $ helm install ./helm-chart/sanfran/
 To add your JS function, use the `cli/build/sanfran-cli` command. As an example run these commands to add a function that just returns http request headers.
 
 ```console
-$ cli/build/sanfran-cli create headers -file hello-nodejs/headers.js -host sanfran-fnapi-service
-$ curl 'http://sanfran-routing-service/fn/headers?a=hello&b=world'
+$ cli/build/sanfran-cli create headers -file hello-nodejs/headers.js -host fnapi-0.sanfran-fnapi-service
+$ curl 'http://sanfran-router-service/fn/headers?a=hello&b=world'
 ```
 
 You can add as many functions as you like or use 'update', 'delete' or 'list' commands with
 `cli/build/sanfran-cli` to manage existing functions. Here's another hello world example.
 
 ```console
-$ cli/build/sanfran-cli create hello -file hello-nodejs/hello.js -host sanfran-fnapi-service
-$ curl curl 'http://sanfran-routing-service/fn/hello?name=Vik'
+$ cli/build/sanfran-cli create hello -file hello-nodejs/hello.js -host fnapi-0.sanfran-fnapi-service
+$ curl curl 'http://sanfran-router-service/fn/hello?name=Vik'
 ```
 
 ## SanFran JS Functions

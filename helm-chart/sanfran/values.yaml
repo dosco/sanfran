@@ -11,6 +11,9 @@ nodeJS:
 router:
   tag: 0.1
   instances: 1
+apiProxy:
+  tag: 0.1
+  instances: 1
 controller:
   tag: 0.1
   poolSize: 1

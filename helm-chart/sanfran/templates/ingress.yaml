@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sanfran-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api
+        backend:
+          serviceName: sanfran-api-proxy-service
+          servicePort: 80
+      - path: /fn
+        backend:
+          serviceName: sanfran-routing-service
+          servicePort: 80

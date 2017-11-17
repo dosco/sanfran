@@ -5,29 +5,33 @@ kind: Service
 metadata:
   name: sanfran-fnapi-service
 spec:
-  type: {{ .Values.k8s.services.type }}
+  type: ClusterIP
+  clusterIP: None
   ports:
-  - name: http-grpc
-    port: 80
-    targetPort: 8080
+  - name: grpc
+    port: 8080
+  - name: http
+    port: 8081
   selector:
     app: sanfran-fnapi
 
 ---
 apiVersion: apps/v1beta1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: sanfran-fnapi
+  name: fnapi
 spec:
   selector:
     matchLabels:
       app: sanfran-fnapi
+  serviceName: "sanfran-fnapi-service"
   replicas: 1
   template:
     metadata:
       labels:
         app: sanfran-fnapi
     spec:
+      terminationGracePeriodSeconds: 10
       securityContext:
         #runAsNonRoot: true
         #runAsUser: 65534
@@ -38,8 +42,10 @@ spec:
             #allowPrivilegeEscalation: false
             #readOnlyRootFilesystem: true
           ports:
-            - name: http-grpc
+            - name: grpc
               containerPort: 8080
+            - name: http
+              containerPort: 8081
           {{- if eq .Values.k8s.type "gke" }}
           {{- include "fnapi-volume-mounts" . | indent 10 }}
           {{- end}}

@@ -3,6 +3,7 @@ default:
 	cd sidecar && make
 	cd controller && make
 	cd router && make
+	cd api-proxy && make
 	cd janitor && make
 	go build -o cli/build/sanfran-cli .
 
@@ -14,6 +15,7 @@ docker:
 	cd sidecar && make docker
 	cd controller && make docker
 	cd router && make docker
+	cd api-proxy && make docker
 	cd janitor && make docker
 
 docker-push:
@@ -23,6 +25,7 @@ docker-push:
 	cd sidecar && make docker-push
 	cd controller && make docker-push
 	cd router && make docker-push
+	cd api-proxy && make docker
 	cd janitor && make docker-push
 
 deploy:

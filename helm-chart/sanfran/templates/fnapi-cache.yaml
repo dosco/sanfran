@@ -31,7 +31,7 @@ spec:
               mountPath: /var/lib/nginx/cache
           env:
             - name: PROXY_HOST
-              value: sanfran-fnapi-service.{{ .Release.Namespace }}.svc.cluster.local:80
+              value: fnapi-0.sanfran-fnapi-service.{{ .Release.Namespace }}.svc.cluster.local:8081
       volumes:
         - name: cache-volume
           emptyDir:

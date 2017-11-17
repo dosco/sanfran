@@ -54,7 +54,7 @@ func main() {
 	}
 
 	lb := clb.NewClb(clientset,
-		[]string{"sanfran-controller:grpc", "sanfran-fnapi:http-grpc"}, namespace)
+		[]string{"sanfran-controller:grpc", "sanfran-fnapi:grpc"}, namespace)
 
 	controllerClient = controller.NewControllerClient(
 		lb.ClientConn("sanfran-controller"))

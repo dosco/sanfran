@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-const codePath = "/code/%s?v=%d"
+const codePath = "/%s?v=%d"
 
 type server struct{}
 

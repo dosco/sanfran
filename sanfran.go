@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:80", host), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:8080", host), grpc.WithInsecure())
 	if err != nil {
 		glog.Exitln(err.Error())
 	}
@@ -106,7 +106,7 @@ func main() {
 			glog.Exitln(err.Error())
 		}
 
-		fmt.Printf("> http://sanfran-routing-service/fn/%s\n", name)
+		fmt.Printf("> http://sanfran-router-service/fn/%s\n", name)
 	}
 
 	if action == "list" {

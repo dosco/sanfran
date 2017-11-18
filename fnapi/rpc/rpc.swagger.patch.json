@@ -1,0 +1,9 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "SanFran API (Serverless Functions on Kubernetes)",
+    "version": "0.1"
+  },
+  "schemes": [
+  ]
+}

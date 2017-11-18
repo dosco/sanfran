@@ -1,0 +1,240 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "SanFran API (Serverless Functions on Kubernetes)",
+    "version": "0.1"
+  },
+  "schemes": [],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/fn/create": {
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/rpcCreateResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rpcCreateReq"
+            }
+          }
+        ],
+        "tags": [
+          "FnAPI"
+        ]
+      }
+    },
+    "/api/v1/fn/delete": {
+      "post": {
+        "operationId": "Delete",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/rpcDeleteResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rpcDeleteReq"
+            }
+          }
+        ],
+        "tags": [
+          "FnAPI"
+        ]
+      }
+    },
+    "/api/v1/fn/get": {
+      "post": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/rpcGetResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rpcGetReq"
+            }
+          }
+        ],
+        "tags": [
+          "FnAPI"
+        ]
+      }
+    },
+    "/api/v1/fn/list": {
+      "post": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/rpcListResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rpcListReq"
+            }
+          }
+        ],
+        "tags": [
+          "FnAPI"
+        ]
+      }
+    },
+    "/api/v1/fn/update": {
+      "post": {
+        "operationId": "Update",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/rpcUpdateResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rpcUpdateReq"
+            }
+          }
+        ],
+        "tags": [
+          "FnAPI"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "rpcCreateReq": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "$ref": "#/definitions/rpcFunction"
+        }
+      }
+    },
+    "rpcCreateResp": {
+      "type": "object"
+    },
+    "rpcDeleteReq": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "rpcDeleteResp": {
+      "type": "object"
+    },
+    "rpcFunction": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string",
+          "format": "byte"
+        },
+        "package": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "rpcGetReq": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "rpcGetResp": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "format": "int64"
+        },
+        "code_path": {
+          "type": "string"
+        }
+      }
+    },
+    "rpcListReq": {
+      "type": "object"
+    },
+    "rpcListResp": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rpcUpdateReq": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "$ref": "#/definitions/rpcFunction"
+        }
+      }
+    },
+    "rpcUpdateResp": {
+      "type": "object"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
 ADD build/sanfran-api-proxy /
-ADD rpc.swagger.json /
+ADD fnapi.swagger.json /
 WORKDIR /
 
 

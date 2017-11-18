@@ -25,7 +25,7 @@ docker-push:
 	cd sidecar && make docker-push
 	cd controller && make docker-push
 	cd router && make docker-push
-	cd api-proxy && make docker
+	cd api-proxy && make docker-push
 	cd janitor && make docker-push
 
 deploy:

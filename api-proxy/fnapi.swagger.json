@@ -1,13 +1,10 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "rpc/rpc.proto",
-    "version": "version not set"
+    "title": "SanFran API (Serverless Functions on Kubernetes)",
+    "version": "0.1"
   },
-  "schemes": [
-    "http",
-    "https"
-  ],
+  "schemes": [],
   "consumes": [
     "application/json"
   ],
@@ -156,12 +153,7 @@
       }
     },
     "rpcCreateResp": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "rpcDeleteReq": {
       "type": "object",
@@ -198,18 +190,17 @@
       "properties": {
         "name": {
           "type": "string"
-        },
-        "limited": {
-          "type": "boolean",
-          "format": "boolean"
         }
       }
     },
     "rpcGetResp": {
       "type": "object",
       "properties": {
-        "function": {
-          "$ref": "#/definitions/rpcFunction"
+        "name": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
         },
         "version": {
           "type": "string",
@@ -243,12 +234,7 @@
       }
     },
     "rpcUpdateResp": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     }
   }
 }

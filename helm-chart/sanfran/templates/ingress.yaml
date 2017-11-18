@@ -14,5 +14,5 @@ spec:
           servicePort: 80
       - path: /fn
         backend:
-          serviceName: sanfran-routing-service
+          serviceName: sanfran-router-service
           servicePort: 80

@@ -39,7 +39,7 @@ func main() {
 	mux.Handle("/api/v1/fn/", gwmux)
 
 	mux.HandleFunc("/api/swagger.json", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "rpc.swagger.json")
+		http.ServeFile(w, r, "fnapi.swagger.json")
 	})
 	serveSwaggerUI(mux)
 

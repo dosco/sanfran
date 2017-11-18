@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"net"
 
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	"github.com/dosco/sanfran/lib/clb"
 	"github.com/golang/glog"
+	grpc "google.golang.org/grpc"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -42,15 +44,15 @@ func main() {
 	if err != nil {
 		glog.Fatalln(err.Error())
 	}
-
 	namespace = getNamespace()
 
+	fnapiClient = fnapi.NewFnAPIClient(
+		clientConn("fnapi-0.sanfran-fnapi-service", "8080"))
+
 	lb := clb.NewClb(clientset,
-		[]string{"sanfran-fnapi:grpc", "sanfran-fnapi-cache:http"}, namespace)
+		[]string{"sanfran-fnapi-cache:http"}, namespace)
 
-	fnapiClient = fnapi.NewFnAPIClient(lb.ClientConn("sanfran-fnapi"))
 	fnapiCacheLB = clb.HttpRoundRobin(lb)
-
 	if err := fnapiCacheLB.Start("sanfran-fnapi-cache"); err != nil {
 		glog.Fatalln(err.Error())
 	}
@@ -58,4 +60,13 @@ func main() {
 	watchPods(clientset)
 	autoScaler(clientset)
 	grpcd(port, lb)
+}
+
+func clientConn(host, port string) *grpc.ClientConn {
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	conn, err := grpc.Dial(net.JoinHostPort(host, port), opts...)
+	if err != nil {
+		panic(err.Error())
+	}
+	return conn
 }

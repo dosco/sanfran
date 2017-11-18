@@ -24,6 +24,12 @@ Provided you have a Kubernetes cluster and Helm installed on it.
 $ helm install https://raw.githubusercontent.com/dosco/sanfran/master/helm-chart/sanfran-0.1.0.tgz
 ```
 
+The SanFran API can then be accessed as follows
+
+```console
+open http://your_ingress_ip/api/
+```
+
 ## Quickstart
 
 The easiest way to get started with SanFran is to install it using [Helm](https://github.com/kubernetes/helm) on [Minikube](https://github.com/kubernetes/minikube). Helm is a tool to help install apps on Kubernetes and Minikube is a small development version of Kubernetes.
@@ -57,7 +63,7 @@ To add your JS function, use the `cli/build/sanfran-cli` command. As an example 
 
 ```console
 $ cli/build/sanfran-cli create headers -file hello-nodejs/headers.js -host fnapi-0.sanfran-fnapi-service
-$ curl 'http://sanfran-router-service/fn/headers?a=hello&b=world'
+$ open http://$(minikube ip)/fn/headers?a=hello&b=world
 ```
 
 You can add as many functions as you like or use 'update', 'delete' or 'list' commands with
@@ -65,7 +71,7 @@ You can add as many functions as you like or use 'update', 'delete' or 'list' co
 
 ```console
 $ cli/build/sanfran-cli create hello -file hello-nodejs/hello.js -host fnapi-0.sanfran-fnapi-service
-$ curl curl 'http://sanfran-router-service/fn/hello?name=Vik'
+$ curl curl 'http://$(minikube ip)/fn/hello?name=Vik'
 ```
 
 ## SanFran JS Functions
@@ -105,24 +111,6 @@ Bucket         #   %       Histogram
 - All micro-services can be scaled horizontally for large deployments
 - Keep the design simple and focus on performance, efficiency and extensibility
 
-### Building and Developing on SanFran
-
-For local development I use Minikube so all the below steps will require it to be installed and running. [Minikube Github](https://github.com/kubernetes/minikube)
-
-SanFran is written entire in GO and depends on Kubernetes among other things. All dependencies are vendored in using the `glide` tool. Just use the command `make` to build all the services and cli tool natively on your dev box. To build and deploy the SanFran containers to your local Minikube instance use the below commands.
-
-```console
-$ eval $(minikube docker-env)
-$ make docker
-```
-
-You can also build and run specific services with the below command.
-
-```console
-$ cd router
-$ make run
-```
-
 ### Minikube Setup Guide
 
 Minikube is a tool that makes it easy to run Kubernetes locally. Minikube runs a single-node Kubernetes cluster inside a VM on your laptop for users looking to try out Kubernetes or develop with it day-to-day.
@@ -140,6 +128,7 @@ $ sudo chmod u+s $(brew --prefix)/opt/docker-machine-driver-xhyve/bin/docker-mac
 
 ```console
 $ minikube start --vm-driver=xhyve
+$ minikube addons enable ingress
 $ eval $(minikube docker-env)
 ```
 
@@ -150,9 +139,10 @@ $ brew install kubernetes-helm
 $ helm init
 ```
 
-#### Connect your machine to the Minikube cluster
+### Minikube Development Tips
 
-It helps to make the IP's inside the Minikube cluster / vm accessible for your development host (Mac Laptop). The below commands will setup MacOS routing to allow for this.
+This part is not required but helps with debugging if you do development work
+using Minikube. To make the IP's inside the Minikube cluster / vm accessible for your development host (Mac Laptop). The below commands will setup MacOS routing to allow for this.
 
 ```console
 $ sudo route -n add 10.0.0.0/24 $(minikube ip)
@@ -182,7 +172,25 @@ $ scutil --dns | grep "10.0.0.10" |  if [ $? -eq 0 ]; then echo "dns setup ok"; 
 And if you already have SanFran deployed on Minikube then use ping to see if its reachable.
 
 ```
-$ ping sanfran-routing-service
+$ ping sanfran-router-service
+```
+
+### Building and Developing on SanFran
+
+For local development I use Minikube so all the below steps will require it to be installed and running. [Minikube Github](https://github.com/kubernetes/minikube)
+
+SanFran is written entire in GO and depends on Kubernetes among other things. All dependencies are vendored in using the `glide` tool. Just use the command `make` to build all the services and cli tool natively on your dev box. To build and deploy the SanFran containers to your local Minikube instance use the below commands.
+
+```console
+$ eval $(minikube docker-env)
+$ make docker
+```
+
+You can also build and run specific services with the below command.
+
+```console
+$ cd router
+$ make run
 ```
 
 ## SanFran :heart: Developers

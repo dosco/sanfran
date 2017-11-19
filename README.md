@@ -59,19 +59,35 @@ $ helm install ./helm-chart/sanfran/
 
 ## Fun With Functions
 
-To add your JS function, use the `cli/build/sanfran-cli` command. As an example run these commands to add a function that just returns http request headers.
+To add your JS function, use the `node cli/index.js` command. As an example run these commands to add a function that just returns http request headers.
 
 ```console
-$ cli/build/sanfran-cli create headers -file hello-nodejs/headers.js -host fnapi-0.sanfran-fnapi-service
-$ open http://$(minikube ip)/fn/headers?a=hello&b=world
+$ node cli/index.js
+  ____                    _____
+ / ___|    __ _   _ __   |  ___|  _ __    __ _   _ __
+ \___ \   / _` | | '_ \  | |_    | '__|  / _` | | '_ \
+  ___) | | (_| | | | | | |  _|   | |    | (_| | | | | |
+ |____/   \__,_| |_| |_| |_|     |_|     \__,_| |_| |_|
+
+? Sanfran API server: (Use arrow keys)
+❯ Minikube IP
+  Other
 ```
 
-You can add as many functions as you like or use 'update', 'delete' or 'list' commands with
-`cli/build/sanfran-cli` to manage existing functions. Here's another hello world example.
+Or try adding the `hello-nodejs/headers.js` or `hello-nodejs/hello.js` sample functions
 
 ```console
-$ cli/build/sanfran-cli create hello -file hello-nodejs/hello.js -host fnapi-0.sanfran-fnapi-service
-$ curl curl 'http://$(minikube ip)/fn/hello?name=Vik'
+? Sanfran API server: Minikube IP
+? Pick an action you want to take: Create
+? Enter function name: hello
+? Enter filename of the function code: hello-nodejs/hello.js
+> https://192.168.64.4/fn/hello
+```
+
+Then go try the function see it running with your web browser
+
+```console
+$ open http://$(minikube ip)/fn/hello?name=Vik
 ```
 
 ## SanFran JS Functions

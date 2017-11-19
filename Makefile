@@ -1,4 +1,5 @@
 default:
+	cd cli && npm install
 	cd fnapi && make
 	cd sidecar && make
 	cd controller && make
@@ -8,6 +9,7 @@ default:
 	go build -o cli/build/sanfran-cli .
 
 docker:
+	cd cli && npm install
 	cd hello-nodejs && npm install
 	cd base-nodejs && npm install && make docker
 	cd fnapi && make docker

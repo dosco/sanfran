@@ -2,22 +2,81 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"strings"
+	"time"
 
+	builder "github.com/dosco/sanfran/builder/rpc"
 	"github.com/dosco/sanfran/fnapi/data"
 	"github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/dosco/sanfran/lib/clb"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/golang/glog"
+	minio "github.com/minio/minio-go"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
-const codePath = "/%s?v=%d"
+const (
+	codePath   = "/functions/%s"
+	bucketName = "functions"
+)
 
-type server struct{}
+type server struct {
+	fnstoreLB     clb.Balancer
+	builderClient builder.BuilderClient
+}
+
+func initServer(clientset *kubernetes.Clientset, port int) {
+	fnStoreName := fmt.Sprintf("%s-fnstore", getHelmRelease())
+	fnStoreNamePortLabel := fmt.Sprintf("%s:service", fnStoreName)
+
+	lb := clb.NewClb(clientset,
+		[]string{"sanfran-builder:grpc", fnStoreNamePortLabel}, getNamespace())
+
+	builderClient := builder.NewBuilderClient(lb.ClientConn("sanfran-builder"))
+	fnstoreLB := clb.HttpRoundRobin(lb)
+
+	if err := fnstoreLB.Start(fnStoreName); err != nil {
+		glog.Fatalln(err.Error())
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port)) // RPC port
+	if err != nil {
+		glog.Fatalf("failed to listen: %v", err)
+	}
+	g := grpc.NewServer()
+
+	server := &server{builderClient: builderClient, fnstoreLB: fnstoreLB}
+	rpc.RegisterFnAPIServer(g, server)
+
+	glog.Infof("SanFran/FnAPI GRPC Service Listening on :%d\n", port)
+	g.Serve(lis)
+}
 
 func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateResp, error) {
-	fn := functionFromReq(req.GetFunction())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	reqFn := req.GetFunction()
+
+	builderReq := &builder.BuildReq{
+		Name:    reqFn.GetName(),
+		Lang:    reqFn.GetLang(),
+		Code:    reqFn.GetCode(),
+		Package: reqFn.GetPackage(),
+		Version: 1,
+	}
+
+	_, err := s.builderClient.Build(ctx, builderReq)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	fn := functionFromReq(reqFn)
+	fn.Version = 1
 
 	if err := ds.CreateFn(&fn); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
@@ -28,7 +87,30 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 }
 
 func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateResp, error) {
-	fn := functionFromReq(req.GetFunction())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	reqFn := req.GetFunction()
+
+	oldFn, err := ds.GetFn(reqFn.GetName())
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	builderReq := &builder.BuildReq{
+		Name:    reqFn.GetName(),
+		Lang:    reqFn.GetLang(),
+		Code:    reqFn.GetCode(),
+		Package: reqFn.GetPackage(),
+		Version: oldFn.Version + 1,
+	}
+
+	_, err = s.builderClient.Build(ctx, builderReq)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	fn := functionFromReq(reqFn)
 
 	if err := ds.UpdateFn(&fn); err == ErrKeyNotExists {
 		return nil, grpc.Errorf(codes.NotFound, err.Error())
@@ -48,14 +130,10 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	codePath := fmt.Sprintf(codePath,
-		functionFilename(fn), fn.GetVersion())
-
 	resp := rpc.GetResp{
-		Name:     fn.GetName(),
-		Lang:     fn.GetLang(),
-		Version:  fn.GetVersion(),
-		CodePath: codePath,
+		Name:    fn.GetName(),
+		Lang:    fn.GetLang(),
+		Version: fn.GetVersion(),
 	}
 
 	glog.Infof("[%s] Function fetched", req.GetName())
@@ -63,9 +141,22 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 }
 
 func (s *server) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.DeleteResp, error) {
-	if err := ds.DeleteFn(req.GetName()); err == ErrKeyNotExists {
+	fn, err := ds.DeleteFn(req.GetName())
+
+	if err == ErrKeyNotExists {
 		return nil, grpc.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	client, err := getFnstoreClient(s.fnstoreLB)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	fileName := functionFilename(fn.Name, fn.Lang, fn.Version)
+
+	if err = client.RemoveObject(bucketName, fileName); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
@@ -93,14 +184,26 @@ func functionFromReq(reqFn *rpc.Function) data.Function {
 		Lang:    reqFn.GetLang(),
 		Code:    reqFn.GetCode(),
 		Package: reqFn.GetPackage(),
+		Version: 0,
 	}
 }
 
-func functionFilename(fn *data.Function) string {
-	filename := []string{fn.GetName(), fn.GetLang()}
-	if fn.GetPackage() {
-		filename = append(filename, "zip")
+func functionFilename(name, lang string, version int64) string {
+	return strings.Join([]string{
+		fmt.Sprintf("%s-%d", name, version), lang, "zip"}, ".")
+}
+
+func getFnstoreClient(fnstoreLB clb.Balancer) (*minio.Client, error) {
+	addr, err := fnstoreLB.Get()
+	if err != nil {
+		return nil, err
 	}
 
-	return strings.Join(filename, ".")
+	minioClient, err := minio.New(addr.Addr,
+		getFnstoreAccessKey(), getFnstoreSecretKey(), false)
+	if err != nil {
+		return nil, err
+	}
+
+	return minioClient, nil
 }

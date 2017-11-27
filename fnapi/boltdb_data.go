@@ -66,8 +66,18 @@ func (d *datastore) GetFn(key string) (*data.Function, error) {
 	return &fn, nil
 }
 
-func (d *datastore) DeleteFn(key string) error {
-	return d.delete(FN_BKT, []byte(key))
+func (d *datastore) DeleteFn(key string) (*data.Function, error) {
+	b, err := d.delete(FN_BKT, []byte(key))
+	if err != nil {
+		return nil, err
+	}
+
+	var fn data.Function
+	if err := fn.Unmarshal(b); err != nil {
+		return nil, err
+	}
+
+	return &fn, nil
 }
 
 func (d *datastore) ListFn() ([]data.Function, error) {

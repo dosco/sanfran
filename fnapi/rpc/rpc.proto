@@ -70,7 +70,6 @@ message GetResp {
   string name = 1;
   string lang = 2;
   int64 version = 3;
-  string code_path = 4;
 }
 
 message DeleteReq {

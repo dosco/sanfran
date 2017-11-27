@@ -1,4 +1,4 @@
-image = dosco/sanfran-api-proxy:0.1
+image = dosco/sanfran-api-proxy:0.2
 
 fnapi.swagger.json:
 	cp ../fnapi/rpc/fnapi.swagger.json .

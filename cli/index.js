@@ -54,7 +54,7 @@ getCommonParams(function(args){
           fnGet(info.name);
           break;
         case "Update":
-          fnCreate(info.name, info.filename);
+          fnUpdate(info.name, info.filename);
           break;
         case "Delete":
           fnDelete(info.name);
@@ -151,6 +151,9 @@ function fnCreate(name, filename) {
   };
 
   var h = function(err, res, body) {
+    console.log(err);
+    console.log(body);
+
     var url = chalk.underline.bold.green(`${serverURL}/fn/${name}`);
     console.log(">", url, "\n");
   }
@@ -193,6 +196,9 @@ function fnDelete(name) {
 function fnList() {
   var h = function(err, res, obj) {
     console.log(">", "Functions:");
+    if (!obj || !obj.names) {
+      return;
+    }
     for (var i = 0; i < obj.names.length; i++) {
       var n = i + 1;
       var name = obj.names[i];

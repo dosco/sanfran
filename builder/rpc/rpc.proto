@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package rpc;
+
+service Builder {
+  rpc Build (BuildReq) returns (BuildResp) {}
+}
+
+message BuildReq {
+  string name = 1;
+  string lang = 2;
+  bytes code = 3;
+  bool package = 4;
+  int64 version = 5;
+}
+
+message BuildResp { }

@@ -1,8 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "SanFran API (Serverless Functions on Kubernetes)",
-    "version": "0.1"
+    "title": "SanFran API",
+    "version": "0.1",
+    "description": "Serverless Functions on Kubernetes"
   },
   "schemes": [],
   "consumes": [
@@ -205,9 +206,6 @@
         "version": {
           "type": "string",
           "format": "int64"
-        },
-        "code_path": {
-          "type": "string"
         }
       }
     },

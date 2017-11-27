@@ -3,28 +3,40 @@
 # Declare variables to be passed into your templates.
 
 k8s:
-  type: "minikube"
   services:
     type: "ClusterIP"
 nodeJS:
-  tag: 0.1
+  tag: 0.2
 router:
-  tag: 0.1
+  tag: 0.2
   instances: 1
 apiProxy:
-  tag: 0.1
+  tag: 0.2
   instances: 1
 controller:
-  tag: 0.1
+  tag: 0.2
   poolSize: 1
   instances: 1
 sidecar:
-  tag: 0.1
+  tag: 0.2
 fnapi:
-  tag: 0.1
-fnapiCache:
-  tag: 0.1
+  tag: 0.2
+  persistence:
+    size: 10Gi
+fnstore:
+  mode: standalone
+  replicas: 1
+  accessKey: pooraccesskey
+  secretKey: poorsecretkey
+  serviceType: ClusterIP
+  persistence:
+    size: 10Gi
+fnstoreCache:
+  tag: 0.2
+  instances: 1
+builder:
+  tag: 0.2
   instances: 1
 janitor:
-  tag: 0.1
+  tag: 0.2
   schedule: "*/30 * * * *"

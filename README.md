@@ -74,13 +74,13 @@ $ node cli/index.js
   Other
 ```
 
-Or try adding the `hello-nodejs/headers.js` or `hello-nodejs/hello.js` sample functions
+Or try adding the `demo/headers.js` or `demo/hello.js` sample functions
 
 ```console
 ? Sanfran API server: Minikube IP
 ? Pick an action you want to take: Create
 ? Enter function name: hello
-? Enter filename of the function code: hello-nodejs/hello.js
+? Enter filename of the function code: demo/hello.js
 > https://192.168.64.4/fn/hello
 ```
 

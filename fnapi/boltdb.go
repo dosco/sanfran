@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"os"
 	"runtime/debug"
 
 	"github.com/boltdb/bolt"
@@ -31,16 +30,8 @@ type datastore struct {
 }
 
 func NewDatastore(cacheSize, cacheExpiry int) (*datastore, error) {
-	var dbFile string
-
-	if s, err := os.Stat("/data"); os.IsExist(err) && s.IsDir() {
-		dbFile = "/data/sanfran.db"
-	} else {
-		dbFile = "sanfran.db"
-	}
-
 	// Open new BoltDB database
-	db, err := bolt.Open(dbFile, 0600, nil)
+	db, err := bolt.Open("/data/sanfran.db", 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -128,29 +119,30 @@ func (d *datastore) update(bn []byte, k []byte, obj Marshaler) error {
 	return tx.Commit()
 }
 
-func (d *datastore) delete(bn []byte, k []byte) error {
+func (d *datastore) delete(bn []byte, k []byte) ([]byte, error) {
 	// Start read-write transaction.
 	tx, err := d.db.Begin(true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
 	b := tx.Bucket(bn)
 
 	// Check if key exists.
-	if v := b.Get(k); v == nil {
-		return ErrKeyNotExists
+	v := b.Get(k)
+	if v == nil {
+		return nil, ErrKeyNotExists
 	}
 
 	// Delete record.
 	if err := b.Delete(k); err != nil {
-		return err
+		return nil, err
 	}
 	ck := bytes.Join([][]byte{bn, k}, nil)
 	d.cache.Del(ck)
 
-	return tx.Commit()
+	return v, tx.Commit()
 }
 
 func (d *datastore) get(bn []byte, k []byte) ([]byte, error) {

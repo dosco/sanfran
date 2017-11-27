@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
@@ -49,7 +50,8 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 	}
 
 	version := strconv.FormatInt(fn.GetVersion(), 10)
-	codePath := fn.GetCodePath()
+	codePath := functionFilename(fn.Name, fn.Lang, fn.Version)
+
 	pod := getNextPod()
 
 	if pod == nil {
@@ -130,4 +132,9 @@ func getFunction(name string) (*fnapi.GetResp, error) {
 
 	req := fnapi.GetReq{Name: name}
 	return fnapiClient.Get(ctx, &req)
+}
+
+func functionFilename(name, lang string, version int64) string {
+	return strings.Join([]string{
+		fmt.Sprintf("/functions/%s-%d", name, version), lang, "zip"}, ".")
 }

@@ -1,6 +1,7 @@
 default:
 	cd cli && npm install
 	cd fnapi && make
+	cd builder && make
 	cd sidecar && make
 	cd controller && make
 	cd router && make
@@ -10,10 +11,10 @@ default:
 
 docker:
 	cd cli && npm install
-	cd hello-nodejs && npm install
+	cd demo && npm install
 	cd base-nodejs && npm install && make docker
 	cd fnapi && make docker
-	cd fnapi-cache && make docker
+	cd builder && make docker
 	cd sidecar && make docker
 	cd controller && make docker
 	cd router && make docker
@@ -23,7 +24,7 @@ docker:
 docker-push:
 	cd base-nodejs && npm install && make docker-push
 	cd fnapi && make docker-push
-	cd fnapi-cache && make docker-push
+	cd builder && make docker-push
 	cd sidecar && make docker-push
 	cd controller && make docker-push
 	cd router && make docker-push

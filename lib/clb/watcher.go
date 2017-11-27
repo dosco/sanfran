@@ -125,7 +125,7 @@ func verifyPodReady(pod *v1.Pod) bool {
 func hostPort(pod *v1.Pod, portName string) string {
 	port := findPort(pod, portName)
 	if len(port) == 0 {
-		glog.Errorf("Unable to find a '%s' port", portName)
+		glog.Errorf("Unable to find a '%s' port on %s", portName, pod.Name)
 		port = "8080"
 	}
 	return net.JoinHostPort(pod.Status.PodIP, port)

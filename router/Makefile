@@ -1,4 +1,4 @@
-image = dosco/sanfran-router:0.1
+image = dosco/sanfran-router:0.2
 
 default:
 	go build -o build/sanfran-router .

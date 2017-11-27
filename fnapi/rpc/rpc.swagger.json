@@ -208,9 +208,6 @@
         "version": {
           "type": "string",
           "format": "int64"
-        },
-        "code_path": {
-          "type": "string"
         }
       }
     },

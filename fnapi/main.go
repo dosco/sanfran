@@ -2,58 +2,68 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"net"
-	"net/http"
+	"os"
+	"syscall"
 
-	"github.com/dosco/sanfran/fnapi/rpc"
+	"github.com/TheCodeTeam/goodbye"
 	"github.com/golang/glog"
-	"github.com/julienschmidt/httprouter"
-	"google.golang.org/grpc"
+	context "golang.org/x/net/context"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
-	grpcPort    = 8080
-	httpPort    = 8081
+	port        = 8080
 	cacheExpiry = 60                // Seconds
 	cacheSize   = 100 * 1024 * 1024 // Bytes
 )
 
 var (
-	ds *datastore
+	ds        *datastore
+	clientset *kubernetes.Clientset
 )
 
 func main() {
 	var err error
+	var kubeconfig string
+
+	flag.StringVar(&kubeconfig, "kubeconfig", "",
+		"Path to kubeconfig containing embeded authinfo.")
 
 	flag.Parse()
 	defer glog.Flush()
 
+	if len(kubeconfig) != 0 {
+		glog.Infoln("Using kubeconfig: ", kubeconfig)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		glog.Fatalln(err.Error())
+	}
+
+	ctx := context.Background()
+	goodbye.Register(func(ctx context.Context, sig os.Signal) {
+		if !goodbye.IsNormalExit(sig) {
+			return
+		}
+
+		if ds != nil && sig == syscall.SIGTERM {
+			ds.Close()
+			os.Exit(0)
+		}
+	})
+
 	if ds, err = NewDatastore(cacheSize, cacheExpiry); err != nil {
 		glog.Fatalln(err.Error())
 	}
-	defer ds.Close()
+	defer goodbye.Exit(ctx, -1)
 
-	httpS := httprouter.New()
-	httpS.GET("/:name", fetchCode)
-
-	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", httpPort), httpS)
-		if err != nil {
-			glog.Fatalf(err.Error())
-		}
-	}()
-
-	grpcS := grpc.NewServer()
-	rpc.RegisterFnAPIServer(grpcS, new(server))
-
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort)) // RPC port
-	if err != nil {
-		glog.Fatalf(err.Error())
-	}
-
-	glog.Infof("SanFran/FnAPI GRPC Service Listening on :%d\n", grpcPort)
-	glog.Infof("SanFran/FnAPI HTTP Service Listening on :%d\n", httpPort)
-
-	grpcS.Serve(l)
+	initServer(clientset, port)
 }

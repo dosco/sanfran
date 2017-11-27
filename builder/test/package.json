@@ -1,0 +1,8 @@
+{
+		"name": "function",
+		"version": "1.0.0",
+		"description": "",
+		"dependencies": {
+				"markdown": "^0.5.0"
+		}
+}

@@ -10,12 +10,12 @@ spec:
   ports:
   - name: grpc
     port: 8080
-  - name: http
-    port: 8081
   selector:
     app: sanfran-fnapi
 
 ---
+{{ $fnstoreSecret := printf "%s-%s" .Release.Name "fnstore-user" }}
+
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
@@ -31,7 +31,7 @@ spec:
       labels:
         app: sanfran-fnapi
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 5
       securityContext:
         #runAsNonRoot: true
         #runAsUser: 65534
@@ -44,12 +44,37 @@ spec:
           ports:
             - name: grpc
               containerPort: 8080
-            - name: http
-              containerPort: 8081
-          {{- if eq .Values.k8s.type "gke" }}
-          {{- include "fnapi-volume-mounts" . | indent 10 }}
-          {{- end}}
-
-      {{- if eq .Values.k8s.type "gke" }}
-      {{- include "fnapi-volumes" . | indent 6 }}
-      {{- end}}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          env:
+            - name: SANFRAN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SANFRAN_HELM_RELEASE
+              value: {{ .Release.Name }}
+            - name: SANFRAN_FNSTORE_ACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fnstoreSecret }}
+                  key: accesskey
+            - name: SANFRAN_FNSTORE_SECRETKEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fnstoreSecret }}
+                  key: secretkey
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+          {{- if .Values.fnapi.persistence.storageClass }}
+          volume.beta.kubernetes.io/storage-class: {{ .Values.fnapi.persistence.storageClass }}
+          {{- else }}
+          volume.alpha.kubernetes.io/storage-class: default
+          {{- end }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.fnapi.persistence.size }}

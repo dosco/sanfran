@@ -1,4 +1,4 @@
-image = dosco/sanfran-fnapi:0.1
+image = dosco/sanfran-fnapi:0.2
 
 default: rpc.pb.go fnapi.swagger.json data.pb.go
 	go build -o build/sanfran-fnapi .

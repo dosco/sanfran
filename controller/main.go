@@ -50,10 +50,10 @@ func main() {
 		clientConn("fnapi-0.sanfran-fnapi-service", "8080"))
 
 	lb := clb.NewClb(clientset,
-		[]string{"sanfran-fnapi-cache:http"}, namespace)
+		[]string{"sanfran-fnstore-cache:http"}, namespace)
 
 	fnapiCacheLB = clb.HttpRoundRobin(lb)
-	if err := fnapiCacheLB.Start("sanfran-fnapi-cache"); err != nil {
+	if err := fnapiCacheLB.Start("sanfran-fnstore-cache"); err != nil {
 		glog.Fatalln(err.Error())
 	}
 

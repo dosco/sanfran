@@ -1,0 +1,86 @@
+## Functions API Code Cache Service
+
+{{ $fnstoreService := printf "%s-fnstore-svc.%s.svc.cluster.local:9000" .Release.Name .Release.Namespace }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fnstore-cache-config
+data:
+  nginx.conf: |-
+    worker_processes auto;
+    events {
+      worker_connections 1024;
+    }
+
+    http {
+      proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=backcache:8m max_size=50m;
+
+      server {
+
+        listen 8080;
+
+        location / {
+          set $proxy_host '{{ $fnstoreService }}';
+
+          expires -1;
+          add_header Cache-Control "no-store";
+
+          resolver 10.0.0.10 valid=10s ipv6=off;
+          resolver_timeout 5s;
+
+          proxy_pass http://$proxy_host;
+          proxy_read_timeout 3s;
+          proxy_set_header Host $host;
+
+          proxy_buffering on;
+          proxy_buffers 256 4k;
+          proxy_max_temp_file_size 0k;
+
+          proxy_cache_valid 200 30m;
+          proxy_cache_valid any 0s;
+        }
+      }
+    }
+
+---
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sanfran-fnstore-cache
+spec:
+  selector:
+    matchLabels:
+      app: sanfran-fnstore-cache
+  replicas: {{ .Values.fnstoreCache.instances }}
+  template:
+    metadata:
+      labels:
+        app: sanfran-fnstore-cache
+    spec:
+      securityContext:
+        #runAsNonRoot: true
+        #runAsUser: 65534
+      containers:
+        - name: sanfran-fnstore-cache
+          image: nginx:alpine
+          securityContext:
+            #allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: cache-volume
+              mountPath: /var/lib/nginx/cache
+            - name: nginx-conf
+              mountPath: /etc/nginx
+      volumes:
+        - name: cache-volume
+          emptyDir:
+            medium: "Memory"
+            sizeLimit: "100Mi"
+        - name: nginx-conf
+          configMap:
+            name: fnstore-cache-config

@@ -12,4 +12,4 @@ COPY index.js /app/index.js
 
 CMD [ "node", "./index.js" ]
 
-EXPOSE 81
+EXPOSE 8081

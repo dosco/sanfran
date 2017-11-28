@@ -30,7 +30,8 @@ func grpcd(port int, lb *clb.Clb) {
 	g := grpc.NewServer()
 	controller.RegisterControllerServer(g, &server{clb: lb})
 
-	glog.Infof("SanFran/Controller Service, Port: %d, Namespace: %s\n", port, namespace)
+	glog.Infof("SanFran/Controller Service, Port: %d, Namespace: %s\n",
+		port, getNamespace())
 	glog.Infof("Name: %s, UID: %s\n", getControllerName(), getControllerUID())
 
 	g.Serve(lis)
@@ -93,7 +94,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
-	addr, err := fnapiCacheLB.Get()
+	addr, err := fncacheLB.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +115,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	pod.Annotations["version"] = version
 	pod.Labels["function"] = name
 
-	updatedPod, err := clientset.CoreV1().Pods(namespace).Update(pod)
+	updatedPod, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
 	if err != nil {
 		return nil, err
 	}

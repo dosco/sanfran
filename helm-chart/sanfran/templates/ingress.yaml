@@ -1,7 +1,12 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: sanfran-ingress
+  name: {{ template "sanfran.fullname" . }}-ing
+  labels:
+    app: {{ template "sanfran.fullname" . }}-ing
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
@@ -10,9 +15,9 @@ spec:
       paths:
       - path: /api
         backend:
-          serviceName: sanfran-api-proxy-service
+          serviceName: {{ .Release.Name }}-sf-apiproxy-svc
           servicePort: 80
       - path: /fn
         backend:
-          serviceName: sanfran-router-service
+          serviceName: {{ .Release.Name }}-sf-router-svc
           servicePort: 80

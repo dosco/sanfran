@@ -81,7 +81,7 @@ func podAdded(obj interface{}) {
 	}
 	mux.Unlock()
 
-	glog.Infof("[%s / %s] Pod added\n", pod.Name, pod.Status.PodIP)
+	glog.Infof("[%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
 
 }
 
@@ -101,38 +101,21 @@ func podDeleted(obj interface{}) {
 }
 
 func podUpdated(oldObj, newObj interface{}) {
-	newPod, ok := newObj.(*v1.Pod)
-	if !ok {
-		return
-	}
-
-	if newPod.GetDeletionTimestamp() != nil {
-		podDeleted(newObj)
-		return
-	}
-
-	if verifyPodReady(newPod) == false {
-		return
-	}
-
-	mux.Lock()
-	if _, ok := podSet[newPod.Name]; !ok {
-		podSet[newPod.Name] = struct{}{}
-	}
-	mux.Unlock()
-	glog.Infof("[%s / %s] Pod updated\n", newPod.Name, newPod.Status.PodIP)
+	podAdded(newObj)
 }
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
-	selector := "app=sanfran-func,controller=%s,!function"
+	selector := "app=sf-func,controller=%s,!function"
 	options.LabelSelector = fmt.Sprintf(selector, getControllerName())
-	return clientset.CoreV1().Pods(namespace).List(options)
+
+	return clientset.CoreV1().Pods(getNamespace()).List(options)
 }
 
 func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
-	selector := "app=sanfran-func,controller=%s,!function"
+	selector := "app=sf-func,controller=%s,!function"
 	options.LabelSelector = fmt.Sprintf(selector, getControllerName())
-	return clientset.CoreV1().Pods(namespace).Watch(options)
+
+	return clientset.CoreV1().Pods(getNamespace()).Watch(options)
 }
 
 func verifyPodReady(pod *v1.Pod) bool {

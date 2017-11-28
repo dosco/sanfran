@@ -75,13 +75,14 @@ func newFunctionPod() *v1.Pod {
 	}
 
 	labels := map[string]string{
-		"app":        "sanfran-func",
+		"app":        "sf-func",
+		"release":    getHelmRelease(),
 		"controller": getControllerName(),
 	}
 
 	functionPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "sanfran-pod-",
+			GenerateName: "sf-pod-",
 			Labels:       labels,
 		},
 		Spec: v1.PodSpec{
@@ -105,7 +106,7 @@ func createFunctionPod(async bool) (*v1.Pod, error) {
 		functionPod.Annotations = map[string]string{"locked": "true"}
 	}
 
-	pod, err := clientset.CoreV1().Pods(namespace).Create(functionPod)
+	pod, err := clientset.CoreV1().Pods(getNamespace()).Create(functionPod)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func createFunctionPod(async bool) (*v1.Pod, error) {
 	var createdPod *v1.Pod
 
 	err = wait.Poll(50*time.Millisecond, 15*time.Second, func() (bool, error) {
-		createdPod, err = clientset.CoreV1().Pods(namespace).
+		createdPod, err = clientset.CoreV1().Pods(getNamespace()).
 			Get(pod.Name, metav1.GetOptions{})
 
 		return err == nil && verifyPodReady(createdPod), err

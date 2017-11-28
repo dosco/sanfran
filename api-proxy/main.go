@@ -28,7 +28,10 @@ func main() {
 	gwmux := runtime.NewServeMux()
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	fnapiHostPort := net.JoinHostPort("fnapi-0.sanfran-fnapi-service", "8080")
+
+	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
+	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
+	fnapiHostPort := net.JoinHostPort(host, "8080")
 
 	err := rpc.RegisterFnAPIHandlerFromEndpoint(ctx, gwmux, fnapiHostPort, opts)
 	if err != nil {

@@ -3,7 +3,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sanfran-fnapi-service
+  name: {{ template "sanfran.fullname" . }}-svc
+  labels:
+    app: {{ template "sanfran.fullname" . }}-svc
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   type: ClusterIP
   clusterIP: None
@@ -11,7 +16,7 @@ spec:
   - name: grpc
     port: 8080
   selector:
-    app: sanfran-fnapi
+    app: {{ template "sanfran.fullname" . }}
 
 ---
 {{ $fnstoreSecret := printf "%s-%s" .Release.Name "fnstore-user" }}
@@ -19,17 +24,25 @@ spec:
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  name: fnapi
+  name: {{ template "sanfran.fullname" . }}
+  labels:
+    app: {{ template "sanfran.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
-      app: sanfran-fnapi
-  serviceName: "sanfran-fnapi-service"
+      app: {{ template "sanfran.fullname" . }}
+  serviceName: {{ template "sanfran.fullname" . }}-svc
   replicas: 1
   template:
     metadata:
       labels:
-        app: sanfran-fnapi
+        app: {{ template "sanfran.fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:

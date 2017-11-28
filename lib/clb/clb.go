@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/naming"
 	"k8s.io/client-go/kubernetes"
@@ -25,25 +26,50 @@ type Clb struct {
 	updates    map[string](chan []*naming.Update)
 }
 
-func NewClb(cs *kubernetes.Clientset, apps []string, ns string) *Clb {
+type Config struct {
+	Namespace  string
+	HostPrefix string
+	Services   map[string]Service
+}
+
+type Service struct {
+	Host string
+	Port string
+}
+
+func (cfg Config) Get(name string) string {
+	if v, ok := cfg.Services[name]; ok {
+		if len(cfg.HostPrefix) != 0 {
+			return strings.Join([]string{cfg.HostPrefix, v.Host}, "-")
+		} else {
+			return v.Host
+		}
+	}
+	return ""
+}
+
+func NewClb(cs *kubernetes.Clientset, cfg Config) *Clb {
 	var appNames []string
 
 	clb := &Clb{
 		clientset: cs,
-		namespace: ns,
+		namespace: cfg.Namespace,
 		ports:     make(map[string]string),
 		updates:   make(map[string](chan []*naming.Update)),
 	}
 
-	for _, v := range apps {
+	for _, v := range cfg.Services {
 		var name, port string
 
-		p := strings.Split(v, ":")
-		if len(p) == 2 {
-			name = p[0]
-			port = p[1]
+		if len(cfg.HostPrefix) != 0 {
+			name = strings.Join([]string{cfg.HostPrefix, v.Host}, "-")
 		} else {
-			name = v
+			name = v.Host
+		}
+
+		if len(v.Port) != 0 {
+			port = v.Port
+		} else {
 			port = defaultPort
 		}
 
@@ -52,6 +78,8 @@ func NewClb(cs *kubernetes.Clientset, apps []string, ns string) *Clb {
 		appNames = append(appNames, name)
 	}
 	clb.selector = fmt.Sprintf(appSel, strings.Join(appNames, ","))
+	glog.Infof("[clb] Services selector: %s\n", clb.selector)
+
 	clb.watchPods()
 
 	return clb

@@ -1,0 +1,62 @@
+## API Proxy Layer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "sanfran.fullname" . }}-svc
+  labels:
+    app: {{ template "sanfran.fullname" . }}-svc
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  type: {{ .Values.k8s.services.type }}
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  selector:
+    app: {{ template "sanfran.fullname" . }}
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "sanfran.fullname" . }}
+  labels:
+    app: {{ template "sanfran.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "sanfran.fullname" . }}
+  replicas: {{ .Values.apiProxy.instances }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "sanfran.fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: sanfran-api-proxy
+          image: dosco/sanfran-api-proxy:{{ .Values.apiProxy.tag }}
+          securityContext:
+            #allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SANFRAN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SANFRAN_HELM_RELEASE
+              value: {{ .Release.Name }}

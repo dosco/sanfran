@@ -40,10 +40,10 @@ func cleanup(clientset *kubernetes.Clientset) {
 }
 
 func findOphanPods(wg *sync.WaitGroup) error {
-	namespace := getNamespace()
+	options := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%s-sf-controller", getHelmRelease())}
 
-	options := metav1.ListOptions{LabelSelector: "app=sanfran-controller"}
-	list, err := clientset.CoreV1().Pods(namespace).List(options)
+	list, err := clientset.CoreV1().Pods(getNamespace()).List(options)
 	if err != nil {
 		return err
 	}
@@ -58,11 +58,13 @@ func findOphanPods(wg *sync.WaitGroup) error {
 		ac = append(ac, pod.Name)
 	}
 
-	podSel := fmt.Sprintf("app=sanfran-func,controller notin (%s)", strings.Join(ac, ","))
+	podSel := fmt.Sprintf("app=sf-func,release=%s,controller notin (%s)",
+		getHelmRelease(), strings.Join(ac, ","))
+
 	glog.Infof("Orphan Pod Selector: %s\n", podSel)
 
 	options = metav1.ListOptions{LabelSelector: podSel}
-	list, err = clientset.CoreV1().Pods(namespace).List(options)
+	list, err = clientset.CoreV1().Pods(getNamespace()).List(options)
 	if err != nil {
 		return err
 	}
@@ -142,4 +144,18 @@ func getNamespace() string {
 		return v
 	}
 	return v1.NamespaceDefault
+}
+
+func getEnv(name string, required bool) string {
+	if v := os.Getenv(name); len(v) != 0 {
+		return v
+	}
+	if required {
+		glog.Fatalln(fmt.Errorf("%s not defined", name))
+	}
+	return ""
+}
+
+func getHelmRelease() string {
+	return getEnv("SANFRAN_HELM_RELEASE", true)
 }

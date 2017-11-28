@@ -2,23 +2,20 @@ package main
 
 import (
 	"flag"
+	fmt "fmt"
 	"net"
-	"os"
 
 	controller "github.com/dosco/sanfran/controller/rpc"
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	"github.com/dosco/sanfran/lib/clb"
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
-	clientset *kubernetes.Clientset
-	namespace string
-
+	clientset        *kubernetes.Clientset
 	controllerClient controller.ControllerClient
 	fnapiClient      fnapi.FnAPIClient
 )
@@ -49,20 +46,21 @@ func main() {
 		panic(err.Error())
 	}
 
-	if ns := os.Getenv("SANFRAN_NAMESPACE"); len(ns) != 0 {
-		namespace = ns
-	} else {
-		namespace = v1.NamespaceDefault
+	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
+	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
+	fnapiClient = fnapi.NewFnAPIClient(clientConn(host, "8080"))
+
+	clbCfg := clb.Config{
+		Namespace:  getNamespace(),
+		HostPrefix: getHelmRelease(),
+		Services: map[string]clb.Service{
+			"controller": clb.Service{Host: "sf-controller", Port: "grpc"},
+		},
 	}
-
-	fnapiClient = fnapi.NewFnAPIClient(
-		clientConn("fnapi-0.sanfran-fnapi-service", "8080"))
-
-	lb := clb.NewClb(clientset,
-		[]string{"sanfran-controller:grpc"}, namespace)
+	lb := clb.NewClb(clientset, clbCfg)
 
 	controllerClient = controller.NewControllerClient(
-		lb.ClientConn("sanfran-controller"))
+		lb.ClientConn(clbCfg.Get("controller")))
 
 	watchPods()
 	httpd(port)

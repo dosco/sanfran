@@ -27,7 +27,8 @@ func httpd(port int) {
 	router.PATCH("/fn/:name", execFunc)
 	router.OPTIONS("/fn/:name", execFunc)
 
-	glog.Infof("SanFran/Router Service, Port: %d, Namespace: %s\n", port, namespace)
+	glog.Infof("SanFran/Router Service, Port: %d, Namespace: %s\n",
+		port, getNamespace())
 	glog.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 

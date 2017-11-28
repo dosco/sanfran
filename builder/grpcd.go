@@ -38,14 +38,17 @@ type server struct {
 }
 
 func initServer(clientset *kubernetes.Clientset, port int) {
-	fnStoreName := fmt.Sprintf("%s-fnstore", getHelmRelease())
-	fnStoreNamePortLabel := fmt.Sprintf("%s:service", fnStoreName)
-
-	lb := clb.NewClb(clientset,
-		[]string{fnStoreNamePortLabel}, getNamespace())
+	clbCfg := clb.Config{
+		Namespace:  getNamespace(),
+		HostPrefix: getHelmRelease(),
+		Services: map[string]clb.Service{
+			"fnstore": clb.Service{Host: "fnstore", Port: "service"},
+		},
+	}
+	lb := clb.NewClb(clientset, clbCfg)
 
 	fnstoreLB := clb.HttpRoundRobin(lb)
-	if err := fnstoreLB.Start(fnStoreName); err != nil {
+	if err := fnstoreLB.Start(clbCfg.Get("fnstore")); err != nil {
 		glog.Fatalln(err.Error())
 	}
 

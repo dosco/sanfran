@@ -3,7 +3,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sanfran-router-service
+  name: {{ template "sanfran.fullname" . }}-svc
+  labels:
+    app: {{ template "sanfran.fullname" . }}-svc
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   type: {{ .Values.k8s.services.type }}
   ports:
@@ -11,22 +16,30 @@ spec:
     port: 80
     targetPort: http
   selector:
-    app: sanfran-router
+    app: {{ template "sanfran.fullname" . }}
 
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: sanfran-router
+  name: {{ template "sanfran.fullname" . }}
+  labels:
+    app: {{ template "sanfran.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
-      app: sanfran-router
-  replicas:  {{ .Values.router.instances }}
+      app: {{ template "sanfran.fullname" . }}
+  replicas: {{ .Values.router.instances }}
   template:
     metadata:
       labels:
-        app: sanfran-router
+        app: {{ template "sanfran.fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -45,3 +58,5 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: SANFRAN_HELM_RELEASE
+              value: {{ .Release.Name }}

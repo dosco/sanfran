@@ -3,7 +3,12 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: sanfran-janitor
+  name: {{ template "sanfran.fullname" . }}-cron
+  labels:
+    app: {{ template "sanfran.fullname" . }}-cron
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   schedule: {{ .Values.janitor.schedule | quote }}
   successfulJobsHistoryLimit: 0
@@ -13,6 +18,9 @@ spec:
       template:
         spec:
           containers:
-          - name: sanfran-janitor
-            image: dosco/sanfran-janitor:{{ .Values.janitor.tag }}
+            - name: sanfran-janitor
+              image: dosco/sanfran-janitor:{{ .Values.janitor.tag }}
+              env:
+                - name: SANFRAN_HELM_RELEASE
+                  value: {{ .Release.Name }}
           restartPolicy: OnFailure

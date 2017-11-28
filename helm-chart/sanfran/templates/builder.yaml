@@ -5,16 +5,24 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: sanfran-builder
+  name: {{ template "sanfran.fullname" . }}
+  labels:
+    app: {{ template "sanfran.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
-      app: sanfran-builder
+      app: {{ template "sanfran.fullname" . }}
   replicas:  {{ .Values.builder.instances }}
   template:
     metadata:
       labels:
-        app: sanfran-builder
+        app: {{ template "sanfran.fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
     spec:
       securityContext:
         runAsNonRoot: true

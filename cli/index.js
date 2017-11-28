@@ -141,6 +141,10 @@ function handleActions(action, callback) {
 }
 
 function fnCreate(name, filename) {
+  if (!fs.existsSync(filename)) {
+    console.error("File not found: ", filename)
+    return
+  }
   var d = {
     function: {
       name: name,
@@ -170,6 +174,10 @@ function fnGet(name) {
 }
 
 function fnUpdate(name, filename) {
+  if (!fs.existsSync(filename)) {
+    console.error("File not found: ", filename)
+    return
+  }
   var d = {
     function: {
       name: name,

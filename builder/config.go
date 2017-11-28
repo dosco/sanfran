@@ -24,7 +24,6 @@ func getEnv(name string, required bool) string {
 		glog.Fatalln(fmt.Errorf("%s not defined", name))
 	}
 	return ""
-
 }
 
 func getHelmRelease() string {

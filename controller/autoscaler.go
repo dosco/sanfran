@@ -46,11 +46,11 @@ func autoScaler(clientset *kubernetes.Clientset) {
 }
 
 func scalePods() (*v1.PodList, error) {
-	selector := "app=sanfran-func,controller=%s"
+	selector := "app=sf-func,controller=%s"
 	options := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf(selector, getControllerName())}
 
-	list, err := clientset.CoreV1().Pods(namespace).List(options)
+	list, err := clientset.CoreV1().Pods(getNamespace()).List(options)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func functionScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 		delete(pod.Labels, "function")
 		delete(pod.Annotations, "version")
 
-		_, err := clientset.CoreV1().Pods(namespace).Update(pod)
+		_, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func deletePod(pod *v1.Pod, reason string) error {
 	mux.Unlock()
 
 	options := &metav1.DeleteOptions{}
-	err := clientset.CoreV1().Pods(namespace).Delete(pod.Name, options)
+	err := clientset.CoreV1().Pods(getNamespace()).Delete(pod.Name, options)
 
 	glog.Infof("[%s / %s] Deleting pod (%s)\n", pod.Name, pod.Status.PodIP, reason)
 

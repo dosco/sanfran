@@ -3,7 +3,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: sanfran-config
+  name: {{ template "sanfran.fullname" . }}-cm
+  labels:
+    app: {{ template "sanfran.fullname" . }}-cm
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 data:
   controller.poolsize: {{ .Values.controller.poolSize | quote }}
 
@@ -11,16 +16,24 @@ data:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: sanfran-controller
+  name: {{ template "sanfran.fullname" . }}
+  labels:
+    app: {{ template "sanfran.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
-      app: sanfran-controller
+      app: {{ template "sanfran.fullname" . }}
   replicas: {{ .Values.controller.instances }}
   template:
     metadata:
       labels:
-        app: sanfran-controller
+        app: {{ template "sanfran.fullname" . }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -43,6 +56,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: SANFRAN_HELM_RELEASE
+              value: {{ .Release.Name }}
             - name: SANFRAN_CONTROLLER_NAME
               valueFrom:
                 fieldRef:
@@ -57,4 +72,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: sanfran-config
+            name: {{ template "sanfran.fullname" . }}-cm

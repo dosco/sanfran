@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 
 	fnapi "github.com/dosco/sanfran/fnapi/rpc"
@@ -14,11 +15,9 @@ import (
 )
 
 var (
-	clientset *kubernetes.Clientset
-	namespace string
-
-	fnapiClient  fnapi.FnAPIClient
-	fnapiCacheLB clb.Balancer
+	clientset   *kubernetes.Clientset
+	fnapiClient fnapi.FnAPIClient
+	fncacheLB   clb.Balancer
 )
 
 const port = 8080
@@ -44,16 +43,22 @@ func main() {
 	if err != nil {
 		glog.Fatalln(err.Error())
 	}
-	namespace = getNamespace()
 
-	fnapiClient = fnapi.NewFnAPIClient(
-		clientConn("fnapi-0.sanfran-fnapi-service", "8080"))
+	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
+	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
+	fnapiClient = fnapi.NewFnAPIClient(clientConn(host, "8080"))
 
-	lb := clb.NewClb(clientset,
-		[]string{"sanfran-fnstore-cache:http"}, namespace)
+	clbCfg := clb.Config{
+		Namespace:  getNamespace(),
+		HostPrefix: getHelmRelease(),
+		Services: map[string]clb.Service{
+			"fncache": clb.Service{Host: "sf-fncache", Port: "http"},
+		},
+	}
+	lb := clb.NewClb(clientset, clbCfg)
 
-	fnapiCacheLB = clb.HttpRoundRobin(lb)
-	if err := fnapiCacheLB.Start("sanfran-fnstore-cache"); err != nil {
+	fncacheLB = clb.HttpRoundRobin(lb)
+	if err := fncacheLB.Start(clbCfg.Get("fncache")); err != nil {
 		glog.Fatalln(err.Error())
 	}
 

@@ -11,6 +11,6 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "sanfran.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- $name := base .Template.Name | trimSuffix ".yaml" -}}
+{{- printf "%s-sf-%s" .Release.Name $name | trunc 63 | trimSuffix "-" | lower -}}
 {{- end -}}

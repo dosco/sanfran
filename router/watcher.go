@@ -1,6 +1,7 @@
 package main
 
 import (
+	fmt "fmt"
 	"strconv"
 	"time"
 
@@ -85,13 +86,17 @@ func podUpdated(oldObj, newObj interface{}) {
 }
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
-	options.LabelSelector = "app=sanfran-func,function"
-	return clientset.CoreV1().Pods(namespace).List(options)
+	options.LabelSelector =
+		fmt.Sprintf("app=sf-func,release=%s,function", getHelmRelease())
+
+	return clientset.CoreV1().Pods(getNamespace()).List(options)
 }
 
 func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
-	options.LabelSelector = "app=sanfran-func,function"
-	return clientset.CoreV1().Pods(namespace).Watch(options)
+	options.LabelSelector =
+		fmt.Sprintf("app=sf-func,release=%s,function", getHelmRelease())
+
+	return clientset.CoreV1().Pods(getNamespace()).Watch(options)
 }
 
 func addPod(pod *v1.Pod) {

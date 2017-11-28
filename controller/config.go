@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -31,36 +31,35 @@ func getNamespace() string {
 	return v1.NamespaceDefault
 }
 
-func getControllerName() string {
-	v := os.Getenv("SANFRAN_CONTROLLER_NAME")
-	if len(v) == 0 {
-		panic(errors.New("Env var SANFRAN_CONTROLLER_NAME not defined"))
+func getEnv(name string, required bool) string {
+	if v := os.Getenv(name); len(v) != 0 {
+		return v
 	}
-	return v
+	if required {
+		glog.Fatalln(fmt.Errorf("%s not defined", name))
+	}
+	return ""
+}
+
+func getHelmRelease() string {
+	return getEnv("SANFRAN_HELM_RELEASE", true)
+}
+
+func getControllerName() string {
+	return getEnv("SANFRAN_CONTROLLER_NAME", true)
 }
 
 func getControllerUID() types.UID {
-	v := os.Getenv("SANFRAN_CONTROLLER_UID")
-	if len(v) == 0 {
-		panic(errors.New("Env var SANFRAN_CONTROLLER_UID not defined"))
-	}
+	v := getEnv("SANFRAN_CONTROLLER_UID", true)
 	return types.UID(v)
 }
 
 func getFnLangImage() string {
-	v := os.Getenv("SANFRAN_FN_LANG_IMAGE")
-	if len(v) == 0 {
-		panic(errors.New("Env var SANFRAN_FN_LANG_IMAGE not defined"))
-	}
-	return v
+	return getEnv("SANFRAN_FN_LANG_IMAGE", true)
 }
 
 func getSidecarImage() string {
-	v := os.Getenv("SANFRAN_SIDECAR_IMAGE")
-	if len(v) == 0 {
-		panic(errors.New("Env var SANFRAN_SIDECAR_IMAGE not defined"))
-	}
-	return v
+	return getEnv("SANFRAN_SIDECAR_IMAGE", true)
 }
 
 func readConfig(fn string) string {

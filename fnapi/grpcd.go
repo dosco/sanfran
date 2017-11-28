@@ -30,16 +30,22 @@ type server struct {
 }
 
 func initServer(clientset *kubernetes.Clientset, port int) {
-	fnStoreName := fmt.Sprintf("%s-fnstore", getHelmRelease())
-	fnStoreNamePortLabel := fmt.Sprintf("%s:service", fnStoreName)
+	clbCfg := clb.Config{
+		Namespace:  getNamespace(),
+		HostPrefix: getHelmRelease(),
+		Services: map[string]clb.Service{
+			"builder": clb.Service{Host: "sf-builder", Port: "grpc"},
+			"fnstore": clb.Service{Host: "fnstore", Port: "service"},
+		},
+	}
+	lb := clb.NewClb(clientset, clbCfg)
 
-	lb := clb.NewClb(clientset,
-		[]string{"sanfran-builder:grpc", fnStoreNamePortLabel}, getNamespace())
+	server := &server{
+		builderClient: builder.NewBuilderClient(lb.ClientConn(clbCfg.Get("builder"))),
+		fnstoreLB:     clb.HttpRoundRobin(lb),
+	}
 
-	builderClient := builder.NewBuilderClient(lb.ClientConn("sanfran-builder"))
-	fnstoreLB := clb.HttpRoundRobin(lb)
-
-	if err := fnstoreLB.Start(fnStoreName); err != nil {
+	if err := server.fnstoreLB.Start(clbCfg.Get("fnstore")); err != nil {
 		glog.Fatalln(err.Error())
 	}
 
@@ -49,7 +55,6 @@ func initServer(clientset *kubernetes.Clientset, port int) {
 	}
 	g := grpc.NewServer()
 
-	server := &server{builderClient: builderClient, fnstoreLB: fnstoreLB}
 	rpc.RegisterFnAPIServer(g, server)
 
 	glog.Infof("SanFran/FnAPI GRPC Service Listening on :%d\n", port)

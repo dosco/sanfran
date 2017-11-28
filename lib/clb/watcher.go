@@ -16,7 +16,7 @@ import (
 )
 
 func (clb *Clb) watchPods() {
-	resyncPeriod := 30 * time.Minute
+	resyncPeriod := 1 * time.Minute
 
 	//Setup an informer to call functions when the watchlist changes
 	clb.indexer, clb.controller = cache.NewIndexerInformer(
@@ -43,7 +43,6 @@ func (clb *Clb) podAdded(obj interface{}) {
 	if !ok {
 		return
 	}
-	glog.Infof("[%s / %s] Pod added\n", pod.Name, pod.Status.PodIP)
 
 	if verifyPodReady(pod) == false {
 		return
@@ -57,6 +56,8 @@ func (clb *Clb) podAdded(obj interface{}) {
 		op = naming.Delete
 	}
 
+	glog.Infof("[clb] [%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
+
 	clb.updates[target] <- []*naming.Update{{Op: op, Addr: addr}}
 }
 
@@ -65,33 +66,17 @@ func (clb *Clb) podDeleted(obj interface{}) {
 	if !ok {
 		return
 	}
-	glog.Infof("[%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
 
 	target := pod.Labels["app"]
 	addr := hostPort(pod, clb.ports[target])
+
+	glog.Infof("[clb] [%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
+
 	clb.updates[target] <- []*naming.Update{{Op: naming.Delete, Addr: addr}}
 }
 
 func (clb *Clb) podUpdated(oldObj, newObj interface{}) {
-	newPod, ok := newObj.(*v1.Pod)
-	if !ok {
-		return
-	}
-	glog.Infof("[%s / %s] Pod updated\n", newPod.Name, newPod.Status.PodIP)
-
-	if verifyPodReady(newPod) == false {
-		return
-	}
-
-	target := newPod.Labels["app"]
-	addr := hostPort(newPod, clb.ports[target])
-	op := naming.Add
-
-	if newPod.GetDeletionTimestamp() != nil {
-		op = naming.Delete
-	}
-
-	clb.updates[target] <- []*naming.Update{{Op: op, Addr: addr}}
+	clb.podAdded(newObj)
 }
 
 func (clb *Clb) listFunc(options metav1.ListOptions) (runtime.Object, error) {
@@ -125,7 +110,7 @@ func verifyPodReady(pod *v1.Pod) bool {
 func hostPort(pod *v1.Pod, portName string) string {
 	port := findPort(pod, portName)
 	if len(port) == 0 {
-		glog.Errorf("Unable to find a '%s' port on %s", portName, pod.Name)
+		glog.Errorf("[clb] Unable to find a '%s' port on %s", portName, pod.Name)
 		port = "8080"
 	}
 	return net.JoinHostPort(pod.Status.PodIP, port)

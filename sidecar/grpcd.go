@@ -15,7 +15,6 @@ import (
 
 	"github.com/dosco/sanfran/sidecar/rpc"
 	"github.com/golang/glog"
-	"github.com/sethgrid/pester"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
@@ -49,15 +48,6 @@ func initServer(port int) {
 	g.Serve(lis)
 }
 
-func getClient() *pester.Client {
-	client := pester.New()
-	client.Concurrency = 1
-	client.MaxRetries = 3
-	client.Backoff = pester.LinearJitterBackoff
-	client.KeepLog = false
-	return client
-}
-
 func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.ActivateResp, error) {
 	var err error
 
@@ -66,6 +56,7 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 	}
 
 	if err := resetFuncFolder(funcPath); err != nil {
+		s.terminate = true
 		return nil, err
 	}
 
@@ -82,8 +73,8 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 		return nil, err
 	}
 
-	reqLink := fmt.Sprintf("%s/api/activate", appURLPrefix)
-	httpResp, err := getClient().Get(reqLink)
+	reqLink := strings.Join([]string{appURLPrefix, "/api/activate"}, "")
+	httpResp, err := http.Get(reqLink)
 	if err != nil {
 		s.terminate = true
 		return nil, err
@@ -114,23 +105,13 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 		return nil, fmt.Errorf("terminate = true")
 	}
 
-	var reqLink string
-	if len(req.Query) != 0 {
-		reqLink = fmt.Sprintf("%s%s", appURLPrefix, buildQueryString(req))
-	} else {
-		reqLink = appURLPrefix
-	}
-
-	httpReq, err := http.NewRequest(req.Method, reqLink, bytes.NewReader(req.GetBody()))
+	httpReq, err := http.NewRequest(req.Method, appURLPrefix, bytes.NewReader(req.GetBody()))
 	if err != nil {
 		s.terminate = true
 		return nil, err
 	}
 
-	httpReq.Form = url.Values{}
-	for k, v := range req.GetQuery() {
-		httpReq.Form[k] = v.Value
-	}
+	httpReq.URL.RawQuery = queryString(req)
 
 	httpReq.Header = http.Header{}
 	hdrs := req.GetHeader()
@@ -138,7 +119,7 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 		httpReq.Header[k] = v.Value
 	}
 
-	httpResp, err := getClient().Do(httpReq)
+	httpResp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		s.terminate = true
 		return nil, err
@@ -152,7 +133,9 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 	}
 
 	resp := rpc.ExecuteResp{
-		Body: body,
+		StatusCode: int32(httpResp.StatusCode),
+		Status:     httpResp.Status,
+		Body:       body,
 	}
 
 	resp.Header = make(map[string]*rpc.ListOfString)
@@ -177,9 +160,9 @@ func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.Metrics
 		return &rpc.MetricsResp{Terminate: true}, nil
 	}
 
-	reqLink := fmt.Sprintf("%s/api/ping", appURLPrefix)
+	reqLink := strings.Join([]string{appURLPrefix, "/api/ping"}, "")
 
-	httpResp, err := getClient().Get(reqLink)
+	httpResp, err := http.Get(reqLink)
 	if err != nil {
 		s.terminate = true
 		return nil, err
@@ -215,17 +198,17 @@ func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.Metrics
 	return resp, nil
 }
 
-func buildQueryString(req *rpc.ExecuteReq) string {
-	var qv []string
+func queryString(req *rpc.ExecuteReq) string {
+	q := url.Values{}
 
-	for k, v := range req.Query {
+	for k, v := range req.GetQuery() {
 		for i := range v.Value {
-			qv = append(qv, fmt.Sprintf("%s=%s", k, v.Value[i]))
+			q.Add(k, v.Value[i])
 		}
 	}
 
-	if len(qv) != 0 {
-		return "?" + strings.Join(qv, "&")
+	if len(q) != 0 {
+		return q.Encode()
 	}
 	return ""
 }

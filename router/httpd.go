@@ -90,9 +90,7 @@ func httpToExecuteReq(name string, r *http.Request) (*sidecar.ExecuteReq, error)
 
 	req.Header = make(map[string]*sidecar.ListOfString)
 	for k, v := range r.Header {
-		if key := strings.ToLower(k); key == "upgrade-insecure-requests" ||
-			key == "cache-control" ||
-			key == "pragma" {
+		if key := strings.ToLower(k); key == "upgrade-insecure-requests" {
 			continue
 		}
 		req.Header[k] = &sidecar.ListOfString{Value: v}
@@ -114,13 +112,22 @@ func httpToExecuteReq(name string, r *http.Request) (*sidecar.ExecuteReq, error)
 }
 
 func executeRespToHttp(resp *sidecar.ExecuteResp, w http.ResponseWriter) error {
+	var err error
+
+	if resp.GetStatusCode() != 200 {
+		http.Error(w, resp.GetStatus(), int(resp.GetStatusCode()))
+	}
+
 	header := w.Header()
 	for k, v := range resp.Header {
 		header[k] = v.Value
 	}
 	header["X-Powered-By"] = []string{"SanFran/Alpha"}
 
-	_, err := w.Write(resp.Body)
+	if len(resp.Body) != 0 {
+		_, err = w.Write(resp.Body)
+	}
+
 	return err
 }
 

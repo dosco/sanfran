@@ -44,7 +44,7 @@ func newFunctionPod() *v1.Pod {
 	}
 
 	containerExecute := v1.Container{
-		Name:  "function-container",
+		Name:  "function",
 		Image: getFnLangImage(),
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: true},
@@ -65,7 +65,7 @@ func newFunctionPod() *v1.Pod {
 	}
 
 	containerSidecar := v1.Container{
-		Name:  "sidecar-container",
+		Name:  "sidecar",
 		Image: getSidecarImage(),
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: false},

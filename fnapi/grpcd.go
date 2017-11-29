@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	builder "github.com/dosco/sanfran/builder/rpc"
@@ -24,7 +26,18 @@ const (
 	bucketName = "functions"
 )
 
+var (
+	ErrFnCurrentlyUpdating = errors.New("Function currently updating")
+)
+
+type fnLock struct {
+	sync.RWMutex
+	m map[string]struct{}
+}
+
 type server struct {
+	fnLock
+
 	fnstoreLB     clb.Balancer
 	builderClient builder.BuilderClient
 }
@@ -43,6 +56,7 @@ func initServer(clientset *kubernetes.Clientset, port int) {
 	server := &server{
 		builderClient: builder.NewBuilderClient(lb.ClientConn(clbCfg.Get("builder"))),
 		fnstoreLB:     clb.HttpRoundRobin(lb),
+		fnLock:        fnLock{m: make(map[string]struct{})},
 	}
 
 	if err := server.fnstoreLB.Start(clbCfg.Get("fnstore")); err != nil {
@@ -62,10 +76,15 @@ func initServer(clientset *kubernetes.Clientset, port int) {
 }
 
 func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateResp, error) {
+	reqFn := req.GetFunction()
+
+	if err := s.fnUpdate(reqFn.GetName()); err != nil {
+		return nil, err
+	}
+	defer s.fnUpdateDone(reqFn.GetName())
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	reqFn := req.GetFunction()
 
 	builderReq := &builder.BuildReq{
 		Name:    reqFn.GetName(),
@@ -92,10 +111,15 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 }
 
 func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateResp, error) {
+	reqFn := req.GetFunction()
+
+	if err := s.fnUpdate(reqFn.GetName()); err != nil {
+		return nil, err
+	}
+	defer s.fnUpdateDone(reqFn.GetName())
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	reqFn := req.GetFunction()
 
 	oldFn, err := ds.GetFn(reqFn.GetName())
 	if err != nil {
@@ -146,6 +170,11 @@ func (s *server) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error)
 }
 
 func (s *server) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.DeleteResp, error) {
+	if err := s.fnUpdate(req.GetName()); err != nil {
+		return nil, err
+	}
+	defer s.fnUpdateDone(req.GetName())
+
 	fn, err := ds.DeleteFn(req.GetName())
 
 	if err == ErrKeyNotExists {
@@ -211,4 +240,21 @@ func getFnstoreClient(fnstoreLB clb.Balancer) (*minio.Client, error) {
 	}
 
 	return minioClient, nil
+}
+
+func (s *server) fnUpdate(name string) error {
+	s.fnLock.Lock()
+	if _, ok := s.fnLock.m[name]; ok {
+		return ErrFnCurrentlyUpdating
+	}
+	s.fnLock.m[name] = struct{}{}
+	s.fnLock.Unlock()
+
+	return nil
+}
+
+func (s *server) fnUpdateDone(name string) {
+	s.fnLock.Lock()
+	delete(s.fnLock.m, name)
+	s.fnLock.Unlock()
 }

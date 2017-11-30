@@ -35,28 +35,20 @@ func httpd(port int) {
 func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 
-	fn, err := getFunction(name)
-	if grpc.Code(err) == codes.NotFound {
-		http.NotFound(w, r)
-		return
-	} else if err != nil {
-		panic(err.Error())
-	}
-
-	version := fn.GetVersion()
-	conn, ok := routes.GetConn(name, version)
+	conn, ok := routes.GetConn(name)
 	if !ok {
-		glog.Infof("Route Not Found: %s, %d\n", name, version)
+		glog.Infof("Route Not Found: %s\n", name)
 
 		resp, err := newFunctionPod(name)
-		if err != nil {
+		if grpc.Code(err) == codes.NotFound {
+			http.NotFound(w, r)
+			return
+		} else if err != nil {
 			panic(err.Error())
 		}
-		routes.AddRoute(name, version, resp.GetPodIP())
-		conn, ok = routes.GetConn(name, version)
+		routes.AddRoute(name, resp.GetVersion(), resp.GetPodIP())
+		conn, ok = routes.GetConn(name)
 	}
-
-	glog.Infof("Function Route: %s, %d\n", name, version)
 
 	sc := sidecar.NewSidecarClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)

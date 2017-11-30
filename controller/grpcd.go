@@ -79,6 +79,7 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 	return &controller.NewFunctionPodResp{
 		PodName: pod.Name,
 		PodIP:   pod.Status.PodIP,
+		Version: fn.GetVersion(),
 	}, nil
 }
 

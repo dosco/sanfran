@@ -25,7 +25,9 @@ app.get('/api/ping', function (req, res) {
 
 app.get('/api/activate', function (req, res) {
   try {
+    delete require.cache[codepath];
     func = require(codepath);
+
     res.status(200).send();
   } catch(e) {
     console.error(`user code load error: ${e}`);

@@ -13,4 +13,5 @@ message NewFunctionPodReq {
 message NewFunctionPodResp {
   string pod_name = 1;
   string podIP = 2;
+  int64 version = 3;
 }

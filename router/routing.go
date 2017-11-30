@@ -10,10 +10,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+type FnRoutes struct {
+	sync.Mutex
+	name     string
+	version  int64
+	hosts    []string
+	next     int
+	reqCount int64
+}
+
 type Routes struct {
-	funcMap map[string]*FnRoutes
-	conns   map[string]*grpc.ClientConn
-	mux     sync.Mutex
+	funcMapMux sync.Mutex
+	funcMap    map[string]*FnRoutes
+
+	connsMux sync.Mutex
+	conns    map[string]*grpc.ClientConn
 }
 
 func NewRoutes() Routes {
@@ -24,53 +35,82 @@ func NewRoutes() Routes {
 }
 
 func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.ClientConn {
-	r.mux.Lock()
-	if fr, ok := r.funcMap[name]; !ok {
+	r.funcMapMux.Lock()
+	fr, ok := r.funcMap[name]
+	if !ok {
 		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
-	} else if fr.GetVersion() < version {
+	} else if fr.version != version {
 		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
-	} else if fr.GetVersion() == version {
-		fr.AddHost(hostIP)
+	}
+	r.funcMapMux.Unlock()
+
+	if ok {
+		fr.Lock()
+		if fr.version == version {
+			fr.addHost(hostIP)
+		}
+		fr.Unlock()
 	}
 
+	r.connsMux.Lock()
 	conn, ok := r.testConn(hostIP)
 	if !ok {
-		r.setupConn(hostIP)
+		conn, _ = r.setupConn(hostIP)
 	}
-	r.mux.Unlock()
+	r.connsMux.Unlock()
 
 	return conn
 }
 
 func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
-	r.mux.Lock()
-	if fr, ok := r.funcMap[name]; ok && fr.GetVersion() == version {
-		fr.DeleteHost(hostIP)
+	r.funcMapMux.Lock()
+	fr, ok := r.funcMap[name]
+	r.funcMapMux.Unlock()
 
-		if fr.IsEmpty() {
-			delete(r.funcMap, name)
-		}
-
-		if _, ok := r.testConn(hostIP); !ok {
-			delete(r.conns, hostIP)
-		}
+	if !ok {
+		return
 	}
-	r.mux.Unlock()
+
+	fr.Lock()
+	fr.deleteHost(hostIP)
+	l := len(fr.hosts)
+	fr.Unlock()
+
+	if l == 0 {
+		r.funcMapMux.Lock()
+		delete(r.funcMap, name)
+		r.funcMapMux.Unlock()
+	}
+
+	r.connsMux.Lock()
+	if _, ok := r.testConn(hostIP); !ok {
+		delete(r.conns, hostIP)
+	}
+	r.connsMux.Unlock()
 }
 
-func (r *Routes) GetConn(name string, version int64) (*grpc.ClientConn, bool) {
-	if f, ok := r.funcMap[name]; ok && f.GetVersion() == version {
-		f.waitForRoute(5 * time.Millisecond)
+func (r *Routes) GetConn(name string) (*grpc.ClientConn, bool) {
+	r.funcMapMux.Lock()
+	fr, ok := r.funcMap[name]
+	r.funcMapMux.Unlock()
 
-		hostIP, ok := f.GetHostIP()
+	if ok {
+		fr.WaitForRoute(50 * time.Millisecond)
+
+		fr.Lock()
+		hostIP, ok := fr.getHostIP()
+		fr.Unlock()
+
 		if !ok {
 			return nil, false
 		}
 
+		r.connsMux.Lock()
 		conn, ok := r.testConn(hostIP)
 		if !ok {
-			return r.setupConn(hostIP)
+			conn, ok = r.setupConn(hostIP)
 		}
+		r.connsMux.Unlock()
 
 		return conn, ok
 	}
@@ -108,90 +148,71 @@ func (r *Routes) setupConn(hostIP string) (*grpc.ClientConn, bool) {
 	return conn, true
 }
 
-type FnRoutes struct {
-	name     string
-	version  int64
-	hosts    []string
-	hIndex   int
-	reqCount int64
-	mux      sync.Mutex
-}
-
 func NewFnRoutes(name string, version int64, hostIP string) *FnRoutes {
 	f := &FnRoutes{
 		name:     name,
 		version:  version,
 		hosts:    []string{hostIP},
-		hIndex:   0,
+		next:     0,
 		reqCount: 0,
 	}
 
 	return f
 }
 
-func (f *FnRoutes) AddHost(hostIP string) {
-	f.mux.Lock()
+func (f *FnRoutes) addHost(hostIP string) {
 	exists := false
 	for i := 0; i < len(f.hosts); i++ {
 		if exists = f.hosts[i] == hostIP; exists {
 			break
 		}
 	}
+
 	if !exists {
 		f.hosts = append(f.hosts, hostIP)
 		f.reqCount = 0
 	}
-	f.mux.Unlock()
 }
 
-func (f *FnRoutes) DeleteHost(hostIP string) {
-	f.mux.Lock()
+func (f *FnRoutes) deleteHost(hostIP string) {
 	for i := 0; i < len(f.hosts); i++ {
 		if f.hosts[i] == hostIP {
 			f.hosts = append(f.hosts[:i], f.hosts[i+1:]...)
 		}
 	}
-	f.mux.Unlock()
 }
 
-func (f *FnRoutes) GetHostIP() (string, bool) {
-	var hostIP string
-	var ok bool
+func (f *FnRoutes) getHostIP() (string, bool) {
+	var addr string
 
-	f.mux.Lock()
-	if len := len(f.hosts); len != 0 {
-		if f.hIndex >= len {
-			f.hIndex = 0
+	if len(f.hosts) > 0 {
+		if f.next >= len(f.hosts) {
+			f.next = 0
 		}
-		hostIP, ok = f.hosts[f.hIndex], true
-		f.reqCount = 0
-		f.hIndex++
-	} else {
-		f.reqCount++
+		next := f.next
+		addr = f.hosts[next]
+		next = (next + 1) % len(f.hosts)
+		f.next = next
 	}
-	f.mux.Unlock()
 
-	return hostIP, ok
+	return addr, len(addr) > 0
 }
 
-func (f *FnRoutes) GetVersion() int64 {
-	return f.version
-}
+func (f *FnRoutes) WaitForRoute(tick time.Duration) {
+	f.Lock()
+	waitingForNewPods := len(f.hosts) == 0 && f.reqCount > 0
+	f.Unlock()
 
-func (f *FnRoutes) IsEmpty() bool {
-	return len(f.hosts) == 0
-}
-
-func (f *FnRoutes) waitForRoute(tick time.Duration) {
-	if len(f.hosts) != 0 || f.reqCount == 0 {
+	if waitingForNewPods == false {
 		return
 	}
 
 	wait.Poll(5*time.Millisecond, 100*time.Millisecond, func() (bool, error) {
-		if len(f.hosts) != 0 {
-			return true, nil
-		}
-		return false, nil
+		f.Lock()
+		l := len(f.hosts)
+		f.Unlock()
+
+		return l != 0, nil
 	})
 
 }

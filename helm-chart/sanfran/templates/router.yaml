@@ -48,7 +48,7 @@ spec:
         - name: sanfran-router
           image: dosco/sanfran-router:{{ .Values.router.tag }}
           securityContext:
-            #allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
             - name: http

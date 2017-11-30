@@ -46,14 +46,14 @@ spec:
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:
-        #runAsNonRoot: true
-        #runAsUser: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       containers:
         - name: sanfran-fnapi
           image: dosco/sanfran-fnapi:{{ .Values.fnapi.tag }}
           securityContext:
-            #allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           ports:
             - name: grpc
               containerPort: 8080

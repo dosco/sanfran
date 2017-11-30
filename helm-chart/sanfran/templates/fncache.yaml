@@ -13,15 +13,18 @@ metadata:
     heritage: "{{ .Release.Service }}"
 data:
   nginx.conf: |-
+    pid /dev/null;
     worker_processes auto;
     events {
       worker_connections 1024;
     }
 
     http {
-      proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=backcache:8m max_size=50m;
+      proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=fncache:8m max_size=50m inactive=30m use_temp_path=off;
 
       server {
+        access_log /dev/null;
+        error_log /dev/null;
 
         listen 8080;
 
@@ -34,9 +37,15 @@ data:
           resolver 10.0.0.10 valid=10s ipv6=off;
           resolver_timeout 5s;
 
+          proxy_cache fncache;
           proxy_pass http://$proxy_host;
-          proxy_read_timeout 3s;
+          proxy_read_timeout 5s;
           proxy_set_header Host $host;
+          proxy_ignore_headers Cache-Control;
+
+          proxy_cache_revalidate on;
+          proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+          proxy_cache_lock on;
 
           proxy_buffering on;
           proxy_buffers 256 4k;
@@ -73,8 +82,8 @@ spec:
         heritage: "{{ .Release.Service }}"
     spec:
       securityContext:
-        #runAsNonRoot: true
-        #runAsUser: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       containers:
         - name: nginx
           image: nginx:alpine
@@ -86,7 +95,7 @@ spec:
               containerPort: 8080
           volumeMounts:
             - name: cache-volume
-              mountPath: /var/lib/nginx/cache
+              mountPath: /var/cache/nginx
             - name: nginx-conf
               mountPath: /etc/nginx
       volumes:

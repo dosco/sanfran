@@ -17,9 +17,15 @@ spec:
     spec:
       template:
         spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
           containers:
             - name: sanfran-janitor
               image: dosco/sanfran-janitor:{{ .Values.janitor.tag }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
               env:
                 - name: SANFRAN_HELM_RELEASE
                   value: {{ .Release.Name }}

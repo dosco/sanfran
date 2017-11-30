@@ -48,7 +48,7 @@ spec:
         - name: sanfran-api-proxy
           image: dosco/sanfran-api-proxy:{{ .Values.apiProxy.tag }}
           securityContext:
-            #allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
             - name: http

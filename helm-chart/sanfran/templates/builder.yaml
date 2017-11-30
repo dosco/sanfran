@@ -31,8 +31,8 @@ spec:
         - name: sanfran-builder
           image: dosco/sanfran-builder:{{ .Values.builder.tag }}
           securityContext:
-            #allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           ports:
             - name: grpc
               containerPort: 8080

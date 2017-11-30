@@ -42,7 +42,7 @@ spec:
         - name: sanfran-controller
           image: dosco/sanfran-controller:{{ .Values.controller.tag }}
           securityContext:
-            #allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
             - name: grpc

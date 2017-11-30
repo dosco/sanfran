@@ -105,7 +105,14 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 		return nil, fmt.Errorf("terminate = true")
 	}
 
-	httpReq, err := http.NewRequest(req.Method, appURLPrefix, bytes.NewReader(req.GetBody()))
+	var url string
+	if len(req.GetPath()) == 0 {
+		url = strings.Join([]string{appURLPrefix, "/"}, "")
+	} else {
+		url = strings.Join([]string{appURLPrefix, req.GetPath()}, "/")
+	}
+
+	httpReq, err := http.NewRequest(req.Method, url, bytes.NewReader(req.GetBody()))
 	if err != nil {
 		s.terminate = true
 		return nil, err

@@ -22,9 +22,10 @@ message listOfString {
 message ExecuteReq {
   string name = 1;
   string method = 2;
-  map<string, listOfString> query = 3;
-  map<string, listOfString> header = 4;
-  bytes body = 5;
+  string path = 3;
+  map<string, listOfString> query = 4;
+  map<string, listOfString> header = 5;
+  bytes body = 6;
 }
 
 message ExecuteResp {

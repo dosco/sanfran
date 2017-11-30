@@ -93,19 +93,22 @@ func (s *server) Build(ctx context.Context, req *rpc.BuildReq) (*rpc.BuildResp, 
 		return nil, err
 	}
 
-	f := filepath.Join(dir, "package.json")
-	err = ioutil.WriteFile(f, packageJSON(), fmode)
-	if err != nil {
-		return nil, err
-	}
-
 	packages := extractPackages(string(code))
-	err = installImports(dir, packages)
-	if err != nil {
-		return nil, err
+
+	if len(packages) > 0 {
+		f := filepath.Join(dir, "package.json")
+		err = ioutil.WriteFile(f, packageJSON(), fmode)
+		if err != nil {
+			return nil, err
+		}
+
+		err = installImports(dir, packages)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	filesToZip, err := newNodeJSPackage(dir)
+	filesToZip, err := newNodeJSPackage(dir, (len(packages) > 0))
 	if err != nil {
 		return nil, err
 	}

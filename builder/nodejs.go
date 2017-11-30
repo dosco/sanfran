@@ -10,11 +10,13 @@ import (
 	"strings"
 )
 
-func newNodeJSPackage(codeFolder string) ([]string, error) {
-	fileList := []string{
-		path.Join(codeFolder, "function.js"),
-		path.Join(codeFolder, "package.json"),
+func newNodeJSPackage(codeFolder string, pkgJson bool) ([]string, error) {
+	fileList := []string{path.Join(codeFolder, "function.js")}
+	if !pkgJson {
+		return fileList, nil
 	}
+
+	fileList = append(fileList, path.Join(codeFolder, "package.json"))
 
 	nodeModules := path.Join(codeFolder, "/node_modules")
 	err := filepath.Walk(nodeModules, func(p string, f os.FileInfo, err error) error {

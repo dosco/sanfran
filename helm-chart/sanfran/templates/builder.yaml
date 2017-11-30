@@ -39,6 +39,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           env:
             - name: SANFRAN_NAMESPACE
               valueFrom:
@@ -61,3 +63,7 @@ spec:
           emptyDir:
             medium: "Memory"
             sizeLimit: "100Mi"
+        - name: tmp
+          emptyDir:
+            medium: "Memory"
+            sizeLimit: "50Mi"

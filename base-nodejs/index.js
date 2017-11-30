@@ -6,7 +6,7 @@ const path = require('path');
 const express = require('express')
 const app = express();
 
-const codePath = fs.realpathSync('/shared/func/');
+const codePath = '/shared/func/';
 const funcPath = path.join(codePath, '/function.js');
 
 const port = 8081;
@@ -28,13 +28,10 @@ app.get('/api/ping', function (req, res) {
 
 app.get('/api/activate', function (req, res) {
   try {
-    for (var k in require.cache) {
-      if (k.startsWith(codePath)) {
-        delete require.cache[k];
-      }
+    if (fs.existsSync(codePath)) {
+      clearRequireCache(fs.realpathSync(codePath));
+      func = require(funcPath);
     }
-
-    func = require(funcPath);
     res.status(200).send('activated');
   } catch(e) {
     console.error(`user code load error: ${e}`);
@@ -53,7 +50,7 @@ app.all('/*', function (req, res) {
   }
   try {
     if (typeof func === 'object') {
-      const funcName = _url.split('/', 2)[1];
+      const funcName = _url.substring(1).split('/', 2)[0];
       if (funcName in func) {
         func[funcName](req, res);
         return
@@ -71,3 +68,11 @@ app.all('/*', function (req, res) {
 app.listen(port, function () {
   console.log(`app listening on port ${port}!`);
 })
+
+function clearRequireCache(prefix) {
+  for (var k in require.cache) {
+    if (k.startsWith(prefix)) {
+      delete require.cache[k];
+    }
+  }
+}

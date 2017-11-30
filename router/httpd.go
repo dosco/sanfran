@@ -19,13 +19,13 @@ import (
 
 func httpd(port int) {
 	router := httprouter.New()
-	router.GET("/fn/:name", execFunc)
-	router.POST("/fn/:name", execFunc)
-	router.PUT("/fn/:name", execFunc)
-	router.HEAD("/fn/:name", execFunc)
-	router.DELETE("/fn/:name", execFunc)
-	router.PATCH("/fn/:name", execFunc)
-	router.OPTIONS("/fn/:name", execFunc)
+	router.GET("/fn/*path", execFunc)
+	router.POST("/fn/*path", execFunc)
+	router.PUT("/fn/*path", execFunc)
+	router.HEAD("/fn/*path", execFunc)
+	router.DELETE("/fn/*path", execFunc)
+	router.PATCH("/fn/*path", execFunc)
+	router.OPTIONS("/fn/*path", execFunc)
 
 	glog.Infof("SanFran/Router Service, Port: %d, Namespace: %s\n",
 		port, getNamespace())
@@ -33,7 +33,18 @@ func httpd(port int) {
 }
 
 func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("name")
+	fullPath := ps.ByName("path")
+	if len(fullPath) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+	p := strings.SplitN(fullPath[1:], "/", 2)
+	name := p[0]
+
+	var path string
+	if len(p) == 2 {
+		path = p[1]
+	}
 
 	conn, ok := routes.GetConn(name)
 	if !ok {
@@ -54,7 +65,7 @@ func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	req, err := httpToExecuteReq(name, r)
+	req, err := httpToExecuteReq(name, path, r)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -69,7 +80,7 @@ func execFunc(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func httpToExecuteReq(name string, r *http.Request) (*sidecar.ExecuteReq, error) {
+func httpToExecuteReq(name, path string, r *http.Request) (*sidecar.ExecuteReq, error) {
 	err := r.ParseForm()
 	if err != nil {
 		return nil, err
@@ -78,6 +89,7 @@ func httpToExecuteReq(name string, r *http.Request) (*sidecar.ExecuteReq, error)
 	req := sidecar.ExecuteReq{
 		Name:   name,
 		Method: r.Method,
+		Path:   path,
 	}
 
 	req.Header = make(map[string]*sidecar.ListOfString)

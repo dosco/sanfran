@@ -2,10 +2,13 @@
 
 const os = require('os');
 const fs = require('fs');
+const path = require('path');
 const express = require('express')
 const app = express();
 
-const codepath = "/shared/func/function.js";
+const codePath = fs.realpathSync('/shared/func/');
+const funcPath = path.join(codePath, '/function.js');
+
 const port = 8081;
 
 let func;
@@ -25,24 +28,40 @@ app.get('/api/ping', function (req, res) {
 
 app.get('/api/activate', function (req, res) {
   try {
-    delete require.cache[codepath];
-    func = require(codepath);
+    for (var k in require.cache) {
+      if (k.startsWith(codePath)) {
+        delete require.cache[k];
+      }
+    }
 
-    res.status(200).send();
+    func = require(funcPath);
+    res.status(200).send('activated');
   } catch(e) {
     console.error(`user code load error: ${e}`);
     res.status(500).send(JSON.stringify(e));
-    return;
   }
 });
 
-app.all('/', function (req, res) {
+app.all('/*', function (req, res) {
+  const qs = req.originalUrl.indexOf('?');
+  const _url = (qs === -1)
+    ? req.originalUrl : req.originalUrl.substring(0, qs);
+
   if (!func) {
     res.status(500).send("no function defined");
     return;
   }
   try {
-    func(req, res);
+    if (typeof func === 'object') {
+      const funcName = _url.split('/', 2)[1];
+      if (funcName in func) {
+        func[funcName](req, res);
+        return
+      }
+      res.status(404).send('Not found')
+    } else {
+      func(req, res);
+    }
   } catch (e) {
     console.error(`function error: ${e}`);
     res.status(500).send(JSON.stringify(e));

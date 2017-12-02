@@ -100,6 +100,20 @@ module.exports = function (req, res) {
 };
 ```
 
+Or multiple functions in a single file.
+
+```javascript
+module.exports = {
+	hello: function (req, res) {
+	  res.send( 'Hello' );
+	},
+
+	bye: function (req, res) {
+	  res.send( 'Goodbye' );
+	}
+}
+```
+
 While SanFran seems pretty simple, underneath it is designed to be a scalable and high performance engine to run your functions on.
 
 ## Performance Benchmarks

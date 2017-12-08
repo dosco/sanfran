@@ -10,22 +10,25 @@ import (
 	"strings"
 )
 
-func newNodeJSPackage(codeFolder string, pkgJson bool) ([]string, error) {
+func newNodeJSPackage(codeFolder string, pkgJson, dotEnv bool) ([]string, error) {
 	fileList := []string{path.Join(codeFolder, "function.js")}
-	if !pkgJson {
-		return fileList, nil
+
+	if dotEnv {
+		fileList = append(fileList, path.Join(codeFolder, ".env"))
 	}
 
-	fileList = append(fileList, path.Join(codeFolder, "package.json"))
+	if pkgJson {
+		fileList = append(fileList, path.Join(codeFolder, "package.json"))
 
-	nodeModules := path.Join(codeFolder, "/node_modules")
-	err := filepath.Walk(nodeModules, func(p string, f os.FileInfo, err error) error {
-		fileList = append(fileList, p)
-		return nil
-	})
+		nodeModules := path.Join(codeFolder, "/node_modules")
+		err := filepath.Walk(nodeModules, func(p string, f os.FileInfo, err error) error {
+			fileList = append(fileList, p)
+			return nil
+		})
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return fileList, nil

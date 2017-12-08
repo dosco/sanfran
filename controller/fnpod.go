@@ -10,9 +10,16 @@ import (
 )
 
 func newFunctionPod() *v1.Pod {
+	megaBytes := int64(1024 * 1024)
+
 	sharedVolume := v1.Volume{
-		Name:         "shared-data",
-		VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}},
+		Name: "shared-data",
+		VolumeSource: v1.VolumeSource{
+			EmptyDir: &v1.EmptyDirVolumeSource{
+				Medium:    v1.StorageMediumMemory,
+				SizeLimit: resource.NewQuantity(10*megaBytes, resource.BinarySI),
+			},
+		},
 	}
 
 	runAsNonRoot := true
@@ -30,9 +37,7 @@ func newFunctionPod() *v1.Pod {
 		ReadOnlyRootFilesystem:   &readOnlyRootFilesystem,
 	}
 
-	megaBytes := int64(1024 * 1024)
-
-	containerExecuteResources := v1.ResourceRequirements{
+	containerFunctionResources := v1.ResourceRequirements{
 		Limits: v1.ResourceList{
 			v1.ResourceMemory: *resource.NewQuantity(500*megaBytes, resource.BinarySI),
 			v1.ResourceCPU:    *resource.NewMilliQuantity(1000, resource.DecimalSI),
@@ -43,14 +48,14 @@ func newFunctionPod() *v1.Pod {
 		},
 	}
 
-	containerExecute := v1.Container{
+	containerFunction := v1.Container{
 		Name:  "function",
 		Image: getFnLangImage(),
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{Name: "shared-data", MountPath: "/shared", ReadOnly: true},
 		},
 		SecurityContext: &containerSecurityContext,
-		Resources:       containerExecuteResources,
+		Resources:       containerFunctionResources,
 	}
 
 	containerSidecarResources := v1.ResourceRequirements{
@@ -80,16 +85,19 @@ func newFunctionPod() *v1.Pod {
 		"controller": getControllerName(),
 	}
 
+	gp := int64(0)
+
 	functionPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "sf-pod-",
 			Labels:       labels,
 		},
 		Spec: v1.PodSpec{
-			RestartPolicy:   v1.RestartPolicyNever,
-			Volumes:         []v1.Volume{sharedVolume},
-			Containers:      []v1.Container{containerExecute, containerSidecar},
-			SecurityContext: &podSecurityContext,
+			TerminationGracePeriodSeconds: &gp,
+			RestartPolicy:                 v1.RestartPolicyNever,
+			Volumes:                       []v1.Volume{sharedVolume},
+			Containers:                    []v1.Container{containerSidecar, containerFunction},
+			SecurityContext:               &podSecurityContext,
 		},
 	}
 

@@ -9,6 +9,7 @@ message Function {
   string lang = 2;
   bytes code = 3;
   bool package = 4;
+  map<string, string> vars = 6;
 }
 
 service FnAPI {

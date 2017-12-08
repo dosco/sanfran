@@ -3,15 +3,21 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const express = require('express')
+const express = require('express');
 const app = express();
 
 const codePath = '/shared/func/';
 const funcPath = path.join(codePath, '/function.js');
+const envPath = path.join(codePath, '/.env');
 
 const port = 8081;
 
-let func;
+require('dotenv').config({path: envPath})
+
+const func = (() => {
+  try { return require(funcPath); }
+  catch(e) { console.error(`user code load error: ${e}`); }
+})();
 
 app.get('/api/ping', function (req, res) {
   try {
@@ -27,16 +33,8 @@ app.get('/api/ping', function (req, res) {
 });
 
 app.get('/api/activate', function (req, res) {
-  try {
-    if (fs.existsSync(codePath)) {
-      clearRequireCache(fs.realpathSync(codePath));
-      func = require(funcPath);
-    }
     res.status(200).send('activated');
-  } catch(e) {
-    console.error(`user code load error: ${e}`);
-    res.status(500).send(JSON.stringify(e));
-  }
+    process.exit();
 });
 
 app.all('/*', function (req, res) {
@@ -48,6 +46,7 @@ app.all('/*', function (req, res) {
     res.status(500).send("no function defined");
     return;
   }
+
   try {
     if (typeof func === 'object') {
       const funcName = _url.substring(1).split('/', 2)[0];
@@ -68,11 +67,3 @@ app.all('/*', function (req, res) {
 app.listen(port, function () {
   console.log(`app listening on port ${port}!`);
 })
-
-function clearRequireCache(prefix) {
-  for (var k in require.cache) {
-    if (k.startsWith(prefix)) {
-      delete require.cache[k];
-    }
-  }
-}

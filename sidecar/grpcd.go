@@ -17,6 +17,7 @@ import (
 	"github.com/golang/glog"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type server struct {
@@ -89,6 +90,11 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 			return nil, err
 		}
 		return nil, errors.New(string(body))
+	}
+
+	if ok, err := pingTillOk(); !ok || err != nil {
+		s.terminate = true
+		return nil, fmt.Errorf("Function not restarting: %s", err.Error())
 	}
 
 	s.mux.Lock()
@@ -218,4 +224,18 @@ func queryString(req *rpc.ExecuteReq) string {
 		return q.Encode()
 	}
 	return ""
+}
+
+func pingTillOk() (bool, error) {
+	var r *http.Response
+	var err error
+
+	reqLink := strings.Join([]string{appURLPrefix, "/api/ping"}, "")
+
+	wait.Poll(20*time.Millisecond, 450*time.Millisecond, func() (bool, error) {
+		r, err = http.Head(reqLink)
+		return err == nil && r.StatusCode == 200, nil
+	})
+
+	return err == nil && r.StatusCode == 200, err
 }

@@ -185,6 +185,12 @@
         "package": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },

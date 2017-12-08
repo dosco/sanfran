@@ -104,13 +104,13 @@ Or multiple functions in a single file.
 
 ```javascript
 module.exports = {
-	hello: function (req, res) {
-	  res.send( 'Hello' );
-	},
+  hello: function (req, res) {
+    res.send( 'Hello' );
+  },
 
-	bye: function (req, res) {
-	  res.send( 'Goodbye' );
-	}
+  bye: function (req, res) {
+    res.send( 'Goodbye' );
+  }
 }
 ```
 

@@ -103,7 +103,10 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	glog.Infof("[%s / %s] Activating pod, %s\n", pod.GetName(), pod.Status.PodIP, codeLink)
 
 	req := sidecar.ActivateReq{Link: codeLink}
-	_, activateErr := sidecarClient.Activate(ctx, &req)
+	if _, err := sidecarClient.Activate(ctx, &req); err != nil {
+		glog.Errorf("[%s / %s] %s\n", pod.GetName(), pod.Status.PodIP, err.Error())
+		return nil, err
+	}
 
 	if pod.Annotations == nil {
 		pod.Annotations = make(map[string]string)
@@ -119,10 +122,6 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	updatedPod, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
 	if err != nil {
 		return nil, err
-	}
-
-	if activateErr != nil {
-		return nil, activateErr
 	}
 
 	return updatedPod, nil

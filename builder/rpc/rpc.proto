@@ -12,6 +12,7 @@ message BuildReq {
   bytes code = 3;
   bool package = 4;
   int64 version = 5;
+  map<string, string> vars = 6;
 }
 
 message BuildResp { }

@@ -94,8 +94,9 @@ func (s *server) Build(ctx context.Context, req *rpc.BuildReq) (*rpc.BuildResp, 
 	}
 
 	packages := extractPackages(string(code))
+	nodeModulesExists := len(packages) > 0
 
-	if len(packages) > 0 {
+	if nodeModulesExists {
 		f := filepath.Join(dir, "package.json")
 		err = ioutil.WriteFile(f, packageJSON(), fmode)
 		if err != nil {
@@ -108,7 +109,21 @@ func (s *server) Build(ctx context.Context, req *rpc.BuildReq) (*rpc.BuildResp, 
 		}
 	}
 
-	filesToZip, err := newNodeJSPackage(dir, (len(packages) > 0))
+	dotEnvExists := len(req.GetVars()) > 0
+	if dotEnvExists {
+		var vars string
+		for k, v := range req.GetVars() {
+			vars += fmt.Sprintf("%s=%s\n", k, v)
+		}
+
+		f := filepath.Join(dir, ".env")
+		err = ioutil.WriteFile(f, []byte(vars), fmode)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	filesToZip, err := newNodeJSPackage(dir, nodeModulesExists, dotEnvExists)
 	if err != nil {
 		return nil, err
 	}

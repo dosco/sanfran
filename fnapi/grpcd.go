@@ -92,6 +92,7 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 		Code:    reqFn.GetCode(),
 		Package: reqFn.GetPackage(),
 		Version: 1,
+		Vars:    reqFn.GetVars(),
 	}
 
 	_, err := s.builderClient.Build(ctx, builderReq)
@@ -99,8 +100,13 @@ func (s *server) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateRes
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	fn := functionFromReq(reqFn)
-	fn.Version = 1
+	fn := data.Function{
+		Name:    reqFn.GetName(),
+		Lang:    reqFn.GetLang(),
+		Code:    reqFn.GetCode(),
+		Package: reqFn.GetPackage(),
+		Version: 1,
+	}
 
 	if err := ds.CreateFn(&fn); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
@@ -132,6 +138,7 @@ func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateRes
 		Code:    reqFn.GetCode(),
 		Package: reqFn.GetPackage(),
 		Version: oldFn.Version + 1,
+		Vars:    reqFn.GetVars(),
 	}
 
 	_, err = s.builderClient.Build(ctx, builderReq)
@@ -139,7 +146,13 @@ func (s *server) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateRes
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	fn := functionFromReq(reqFn)
+	fn := data.Function{
+		Name:    reqFn.GetName(),
+		Lang:    reqFn.GetLang(),
+		Code:    reqFn.GetCode(),
+		Package: reqFn.GetPackage(),
+		Version: 0,
+	}
 
 	if err := ds.UpdateFn(&fn); err == ErrKeyNotExists {
 		return nil, grpc.Errorf(codes.NotFound, err.Error())
@@ -210,16 +223,6 @@ func (s *server) List(ctx context.Context, req *rpc.ListReq) (*rpc.ListResp, err
 	}
 
 	return &rpc.ListResp{Names: fnNames}, nil
-}
-
-func functionFromReq(reqFn *rpc.Function) data.Function {
-	return data.Function{
-		Name:    reqFn.GetName(),
-		Lang:    reqFn.GetLang(),
-		Code:    reqFn.GetCode(),
-		Package: reqFn.GetPackage(),
-		Version: 0,
-	}
 }
 
 func functionFilename(name, lang string, version int64) string {

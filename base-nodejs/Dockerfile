@@ -1,4 +1,9 @@
-FROM node:8-alpine
+FROM node:9-alpine
+
+ENV TINI_VERSION v0.16.1-sf
+ADD https://github.com/dosco/tini/releases/download/${TINI_VERSION}/tini-static /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "-r", "--"]
 
 ARG NODE_ENV
 ENV NODE_ENV $NODE_ENV
@@ -8,8 +13,10 @@ WORKDIR /app
 
 COPY package.json /app
 RUN npm install && npm cache clean --force
-COPY index.js /app/index.js
+COPY server.js /app/
 
-CMD [ "node", "./index.js" ]
+VOLUME [ "/shared" ]
+
+CMD ["/usr/local/bin/node", "server.js"]
 
 EXPOSE 8081

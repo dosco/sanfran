@@ -2,11 +2,9 @@ package main
 
 import (
 	"flag"
-	fmt "fmt"
 	"net"
 
 	controller "github.com/dosco/sanfran/controller/rpc"
-	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	"github.com/dosco/sanfran/lib/clb"
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
@@ -17,7 +15,6 @@ import (
 var (
 	clientset        *kubernetes.Clientset
 	controllerClient controller.ControllerClient
-	fnapiClient      fnapi.FnAPIClient
 )
 
 const port = 8080
@@ -45,10 +42,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
-	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
-	fnapiClient = fnapi.NewFnAPIClient(clientConn(host, "8080"))
 
 	clbCfg := clb.Config{
 		Namespace:  getNamespace(),

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	controller "github.com/dosco/sanfran/controller/rpc"
-	fnapi "github.com/dosco/sanfran/fnapi/rpc"
 	sidecar "github.com/dosco/sanfran/sidecar/rpc"
 	"github.com/golang/glog"
 	"github.com/julienschmidt/httprouter"
@@ -141,12 +140,4 @@ func newFunctionPod(name string) (*controller.NewFunctionPodResp, error) {
 
 	req := &controller.NewFunctionPodReq{Name: name}
 	return controllerClient.NewFunctionPod(ctx, req)
-}
-
-func getFunction(name string) (*fnapi.GetResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	req := fnapi.GetReq{Name: name}
-	return fnapiClient.Get(ctx, &req)
 }

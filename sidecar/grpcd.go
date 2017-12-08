@@ -232,7 +232,7 @@ func pingTillOk() (bool, error) {
 
 	reqLink := strings.Join([]string{appURLPrefix, "/api/ping"}, "")
 
-	wait.Poll(20*time.Millisecond, 450*time.Millisecond, func() (bool, error) {
+	wait.Poll(10*time.Millisecond, 450*time.Millisecond, func() (bool, error) {
 		r, err = http.Head(reqLink)
 		return err == nil && r.StatusCode == 200, nil
 	})

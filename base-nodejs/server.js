@@ -15,11 +15,16 @@ const port = 8081;
 require('dotenv').config({path: envPath})
 
 const func = (() => {
+  let hrstart = process.hrtime();
+
   try { return require(funcPath); }
   catch(e) { console.error(`user code load error: ${e}`); }
+
+  let hrend = process.hrtime(hrstart);
+  console.info("Function load time: %ds %dms", hrend[0], hrend[1]/1000000);
 })();
 
-app.get('/api/ping', function (req, res) {
+app.get('/api/ping', (req, res) => {
   try {
     res.status(200).send({
       load_avg: os.loadavg(),
@@ -37,7 +42,7 @@ app.get('/api/activate', function (req, res) {
     process.exit();
 });
 
-app.all('/*', function (req, res) {
+app.all('/*', (req, res) => {
   const qs = req.originalUrl.indexOf('?');
   const _url = (qs === -1)
     ? req.originalUrl : req.originalUrl.substring(0, qs);
@@ -64,6 +69,10 @@ app.all('/*', function (req, res) {
   }
 });
 
-app.listen(port, function () {
+process.on('exit', (code) => {
+  console.log(`Existing with code ${code}`);
+});
+
+const server = app.listen(port, () => {
   console.log(`app listening on port ${port}!`);
 })

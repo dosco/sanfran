@@ -12,11 +12,10 @@ import (
 
 type FnRoutes struct {
 	sync.Mutex
-	name     string
-	version  int64
-	hosts    []string
-	next     int
-	reqCount int64
+	name    string
+	version int64
+	hosts   []string
+	next    int
 }
 
 type Routes struct {
@@ -39,8 +38,6 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.Clien
 	fr, ok := r.funcMap[name]
 	if !ok {
 		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
-	} else if fr.version != version {
-		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
 	}
 	r.funcMapMux.Unlock()
 
@@ -48,6 +45,10 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.Clien
 		fr.Lock()
 		if fr.version == version {
 			fr.addHost(hostIP)
+		} else {
+			fr.version = version
+			fr.hosts = []string{hostIP}
+			fr.next = 0
 		}
 		fr.Unlock()
 	}
@@ -92,11 +93,12 @@ func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
 func (r *Routes) GetConn(name string) (*grpc.ClientConn, bool) {
 	r.funcMapMux.Lock()
 	fr, ok := r.funcMap[name]
+	if !ok {
+		r.funcMap[name] = NewEmptyFnRoutes(name)
+	}
 	r.funcMapMux.Unlock()
 
-	if ok {
-		fr.WaitForRoute(50 * time.Millisecond)
-
+	if ok && fr.WaitForRoute(300*time.Millisecond) {
 		fr.Lock()
 		hostIP, ok := fr.getHostIP()
 		fr.Unlock()
@@ -150,11 +152,19 @@ func (r *Routes) setupConn(hostIP string) (*grpc.ClientConn, bool) {
 
 func NewFnRoutes(name string, version int64, hostIP string) *FnRoutes {
 	f := &FnRoutes{
-		name:     name,
-		version:  version,
-		hosts:    []string{hostIP},
-		next:     0,
-		reqCount: 0,
+		name:    name,
+		version: version,
+		hosts:   []string{hostIP},
+		next:    0,
+	}
+
+	return f
+}
+
+func NewEmptyFnRoutes(name string) *FnRoutes {
+	f := &FnRoutes{
+		name: name,
+		next: 0,
 	}
 
 	return f
@@ -170,7 +180,6 @@ func (f *FnRoutes) addHost(hostIP string) {
 
 	if !exists {
 		f.hosts = append(f.hosts, hostIP)
-		f.reqCount = 0
 	}
 }
 
@@ -198,21 +207,24 @@ func (f *FnRoutes) getHostIP() (string, bool) {
 	return addr, len(addr) > 0
 }
 
-func (f *FnRoutes) WaitForRoute(tick time.Duration) {
+func (f *FnRoutes) WaitForRoute(timeout time.Duration) bool {
 	f.Lock()
-	waitingForNewPods := len(f.hosts) == 0 && f.reqCount > 0
+	waitingForNewPods := len(f.hosts) == 0
 	f.Unlock()
 
 	if waitingForNewPods == false {
-		return
+		return true
 	}
 
-	wait.Poll(5*time.Millisecond, 100*time.Millisecond, func() (bool, error) {
+	var l int
+
+	wait.Poll(10*time.Millisecond, timeout, func() (bool, error) {
 		f.Lock()
-		l := len(f.hosts)
+		l = len(f.hosts)
 		f.Unlock()
 
-		return l != 0, nil
+		return l > 0, nil
 	})
 
+	return l > 0
 }

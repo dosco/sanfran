@@ -15,13 +15,14 @@ const port = 8081;
 require('dotenv').config({path: envPath})
 
 const func = (() => {
-  let hrstart = process.hrtime();
-
-  try { return require(funcPath); }
+  try {
+    let hrstart = process.hrtime();
+    let v =  require(funcPath);
+    let hrend = process.hrtime(hrstart);
+    console.info("Function load time: %ds %dms", hrend[0], hrend[1]/1000000);
+    return v;
+  }
   catch(e) { console.error(`user code load error: ${e}`); }
-
-  let hrend = process.hrtime(hrstart);
-  console.info("Function load time: %ds %dms", hrend[0], hrend[1]/1000000);
 })();
 
 app.get('/api/ping', (req, res) => {

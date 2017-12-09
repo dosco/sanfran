@@ -87,6 +87,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	podHostPort := fmt.Sprintf("%s:8080", pod.Status.PodIP)
 	conn, err := grpc.Dial(podHostPort, grpc.WithInsecure())
 	if err != nil {
+		glog.Errorf("[%s] [grpc.Dial] ", name, err.Error())
 		return nil, err
 	}
 	defer conn.Close()
@@ -97,30 +98,45 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 
 	addr, err := fncacheLB.Get()
 	if err != nil {
+		glog.Errorf("[%s] [fncacheLB.Get] ", name, err.Error())
 		return nil, err
 	}
 	codeLink := fmt.Sprintf("http://%s%s", addr.Addr, codePath)
 	glog.Infof("[%s / %s] Activating pod, %s\n", pod.GetName(), pod.Status.PodIP, codeLink)
 
 	req := sidecar.ActivateReq{Link: codeLink}
-	if _, err := sidecarClient.Activate(ctx, &req); err != nil {
-		glog.Errorf("[%s / %s] %s\n", pod.GetName(), pod.Status.PodIP, err.Error())
-		return nil, err
-	}
+	_, activateErr := sidecarClient.Activate(ctx, &req)
 
 	if pod.Annotations == nil {
 		pod.Annotations = make(map[string]string)
 	}
 
+	upNeeded := false
+
 	if _, ok := pod.Annotations["locked"]; ok {
 		delete(pod.Annotations, "locked")
+		upNeeded = true
 	}
 
-	pod.Annotations["version"] = version
-	pod.Labels["function"] = name
+	if activateErr == nil {
+		pod.Annotations["version"] = version
+		pod.Labels["function"] = name
+		upNeeded = true
+	}
 
-	updatedPod, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
-	if err != nil {
+	var updatedPod *v1.Pod
+
+	if upNeeded {
+		updatedPod, err = clientset.CoreV1().Pods(getNamespace()).Update(pod)
+		if err != nil {
+			glog.Errorf("[%s] [clientset.Update] ", name, err.Error())
+			return nil, err
+		}
+	}
+
+	if activateErr != nil {
+		glog.Errorf("[%s] [activateErr] ", name, activateErr.Error())
+		glog.Errorf("[%s / %s] %s\n", pod.GetName(), pod.Status.PodIP, err.Error())
 		return nil, err
 	}
 

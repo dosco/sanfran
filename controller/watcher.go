@@ -81,7 +81,7 @@ func podAdded(obj interface{}) {
 	}
 	mux.Unlock()
 
-	glog.Infof("[%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
+	//glog.Infof("[%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
 
 }
 
@@ -91,7 +91,7 @@ func podDeleted(obj interface{}) {
 		return
 	}
 
-	glog.Infof("[%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
+	//glog.Infof("[%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
 
 	mux.Lock()
 	if _, ok := podSet[pod.Name]; ok {

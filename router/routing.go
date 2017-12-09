@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type FnRoutes struct {
@@ -16,6 +16,7 @@ type FnRoutes struct {
 	version int64
 	hosts   []string
 	next    int
+	wait    chan bool
 }
 
 type Routes struct {
@@ -37,7 +38,7 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.Clien
 	r.funcMapMux.Lock()
 	fr, ok := r.funcMap[name]
 	if !ok {
-		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
+		glog.Fatalf("Nil funcMap for function: %s\n", name)
 	}
 	r.funcMapMux.Unlock()
 
@@ -49,7 +50,12 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.Clien
 			fr.version = version
 			fr.hosts = []string{hostIP}
 			fr.next = 0
+
+			if fr.wait != nil {
+				close(fr.wait)
+			}
 		}
+
 		fr.Unlock()
 	}
 
@@ -93,31 +99,38 @@ func (r *Routes) DeleteRoute(name string, version int64, hostIP string) {
 func (r *Routes) GetConn(name string) (*grpc.ClientConn, bool) {
 	r.funcMapMux.Lock()
 	fr, ok := r.funcMap[name]
+
 	if !ok {
 		r.funcMap[name] = NewEmptyFnRoutes(name)
+		r.funcMapMux.Unlock()
+		return nil, false
 	}
 	r.funcMapMux.Unlock()
 
-	if ok && fr.WaitForRoute(300*time.Millisecond) {
-		fr.Lock()
-		hostIP, ok := fr.getHostIP()
-		fr.Unlock()
-
-		if !ok {
+	if fr.wait != nil {
+		select {
+		case <-fr.wait:
+		case <-time.After(300 * time.Millisecond):
 			return nil, false
 		}
-
-		r.connsMux.Lock()
-		conn, ok := r.testConn(hostIP)
-		if !ok {
-			conn, ok = r.setupConn(hostIP)
-		}
-		r.connsMux.Unlock()
-
-		return conn, ok
 	}
 
-	return nil, false
+	fr.Lock()
+	hostIP, ok := fr.getHostIP()
+	fr.Unlock()
+
+	if !ok {
+		return nil, false
+	}
+
+	r.connsMux.Lock()
+	conn, ok := r.testConn(hostIP)
+	if !ok {
+		conn, ok = r.setupConn(hostIP)
+	}
+	r.connsMux.Unlock()
+
+	return conn, ok
 }
 
 func (r *Routes) testConn(hostIP string) (*grpc.ClientConn, bool) {
@@ -165,13 +178,14 @@ func NewEmptyFnRoutes(name string) *FnRoutes {
 	f := &FnRoutes{
 		name: name,
 		next: 0,
+		wait: make(chan bool),
 	}
 
 	return f
 }
 
 func (f *FnRoutes) addHost(hostIP string) {
-	exists := false
+	var exists bool
 	for i := 0; i < len(f.hosts); i++ {
 		if exists = f.hosts[i] == hostIP; exists {
 			break
@@ -193,8 +207,12 @@ func (f *FnRoutes) deleteHost(hostIP string) {
 
 func (f *FnRoutes) getHostIP() (string, bool) {
 	var addr string
+	l := len(f.hosts)
 
-	if len(f.hosts) > 0 {
+	if l == 1 {
+		f.next = 0
+		addr = f.hosts[0]
+	} else if l > 0 {
 		if f.next >= len(f.hosts) {
 			f.next = 0
 		}
@@ -205,26 +223,4 @@ func (f *FnRoutes) getHostIP() (string, bool) {
 	}
 
 	return addr, len(addr) > 0
-}
-
-func (f *FnRoutes) WaitForRoute(timeout time.Duration) bool {
-	f.Lock()
-	waitingForNewPods := len(f.hosts) == 0
-	f.Unlock()
-
-	if waitingForNewPods == false {
-		return true
-	}
-
-	var l int
-
-	wait.Poll(10*time.Millisecond, timeout, func() (bool, error) {
-		f.Lock()
-		l = len(f.hosts)
-		f.Unlock()
-
-		return l > 0, nil
-	})
-
-	return l > 0
 }

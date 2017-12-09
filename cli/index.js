@@ -28,7 +28,7 @@ console.log(
 );
 
 getCommonParams(args => {
-  var isCRUD = ["Create", "Get", "Update", "Delete"]
+  let isCRUD = ["Create", "Get", "Update", "Delete"]
     .indexOf(args.action) != -1;
 
   if (args.server === "Other") {
@@ -45,13 +45,13 @@ getCommonParams(args => {
       status.start();
       switch(args.action) {
         case "Create":
-          fnCreate(info.name, info.filename);
+          fnCreate(info.name, info.filename, info.vars);
           break;
         case "Get":
           fnGet(info.name);
           break;
         case "Update":
-          fnUpdate(info.name, info.filename);
+          fnUpdate(info.name, info.filename, info.vars);
           break;
         case "Delete":
           fnDelete(info.name);
@@ -70,7 +70,7 @@ getCommonParams(args => {
 });
 
 function getCommonParams(callback) {
-  var questions = [
+  let questions = [
     {
       name: 'server',
       type: 'list',
@@ -104,7 +104,7 @@ function getCommonParams(callback) {
 }
 
 function handleActions(action, callback) {
-  var questions = [
+  let questions = [
     {
       type: 'input',
       name: 'name',
@@ -132,59 +132,90 @@ function handleActions(action, callback) {
         }
       }
     },
+    {
+      type: 'input',
+      name: 'vars',
+      message: 'Variables (key1=val1,key2=val2):',
+      default: '',
+      when: function(args) {
+        return action === "Create" || action === "Update";
+      },
+      validate: function( value ) {
+        if (value.length) {
+          return true;
+        } else {
+          return 'Enter environment variables for the function';
+        }
+      }
+    },
   ];
 
   return inquirer.prompt(questions).then(callback)
 }
 
-function fnCreate(name, filename) {
+function fnCreate(name, filename, vars) {
   if (!fs.existsSync(filename)) {
     console.error("File not found: ", filename)
     return
   }
-  var d = {
+  let d = {
     function: {
       name: name,
       lang: 'js',
       code: base64_encode(filename),
       package: false,
+      vars: {},
     },
   };
 
-  var h = function(err, res, body) {
+  let v = vars.split(',');
+  for (i in v) {
+    let kv = v[i].trim().split('=');
+    d.function.vars[kv[0]] = kv[1];
+  }
+
+  let h = function(err, res, body) {
     console.log(err);
     console.log(body);
 
-    var url = chalk.underline.bold.green(`${serverURL}/fn/${name}`);
+    let url = chalk.underline.bold.green(`${serverURL}/fn/${name}`);
     console.log(">", url, "\n");
   }
   return client.post('/api/v1/fn/create', d, h);
 }
 
 function fnGet(name) {
-  var d = { name: name };
-  var h = function(err, res, body) {
-    var obj = JSON.stringify(body, null, 2);
+  let d = { name: name };
+  let h = function(err, res, body) {
+    let obj = JSON.stringify(body, null, 2);
     console.log(obj, "\n");
   }
   return client.post('/api/v1/fn/get', d, h);
 }
 
-function fnUpdate(name, filename) {
+function fnUpdate(name, filename, vars) {
   if (!fs.existsSync(filename)) {
     console.error("File not found: ", filename)
     return
   }
-  var d = {
+  let d = {
     function: {
       name: name,
       lang: 'js',
       code: base64_encode(filename),
       package: false,
+      vars: {},
     }
   };
-  var h = function(err, res, body) {
-    var url = chalk.underline.bold.green(`${serverURL}/fn/${name}`);
+
+  let v = vars.split(',');
+  for (i in v) {
+    let kv = v[i].trim().split('=');
+    d.function.vars[kv[0]] = kv[1];
+  }
+
+  let h = function(err, res, body) {
+    let url = chalk.underline.bold.green(`${serverURL}/fn/${name}`);
     console.log(">", url, "\n");
   }
   return client.post('/api/v1/fn/update', d, h);

@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )
@@ -38,24 +37,23 @@ func (r *Routes) AddRoute(name string, version int64, hostIP string) *grpc.Clien
 	r.funcMapMux.Lock()
 	fr, ok := r.funcMap[name]
 	if !ok {
-		glog.Fatalf("Nil funcMap for function: %s\n", name)
+		r.funcMap[name] = NewFnRoutes(name, version, hostIP)
 	}
 	r.funcMapMux.Unlock()
 
 	if ok {
 		fr.Lock()
+		if fr.wait != nil {
+			close(fr.wait)
+			fr.wait = nil
+		}
 		if fr.version == version {
 			fr.addHost(hostIP)
 		} else {
 			fr.version = version
 			fr.hosts = []string{hostIP}
 			fr.next = 0
-
-			if fr.wait != nil {
-				close(fr.wait)
-			}
 		}
-
 		fr.Unlock()
 	}
 

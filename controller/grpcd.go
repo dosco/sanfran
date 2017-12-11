@@ -45,10 +45,14 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 		return nil, fmt.Errorf("No 'name' specified")
 	}
 
+	glog.Infof("[%s] Fetching function info\n", name)
+
 	fn, err := getFunction(name)
 	if err != nil {
 		return nil, err
 	}
+
+	glog.Infof("[%s] Info: %v\n", name, fn)
 
 	version := strconv.FormatInt(fn.GetVersion(), 10)
 	codePath := functionFilename(fn.Name, fn.Lang, fn.Version)

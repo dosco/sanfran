@@ -1,4 +1,4 @@
-image = dosco/sanfran-janitor:0.2
+image = dosco/sanfran-janitor:0.3
 
 default:
 	go build -o build/sanfran-janitor .

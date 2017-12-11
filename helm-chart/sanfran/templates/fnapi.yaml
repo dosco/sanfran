@@ -48,6 +48,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
+        fsGroup: 2000
       containers:
         - name: sanfran-fnapi
           image: dosco/sanfran-fnapi:{{ .Values.fnapi.tag }}
@@ -77,6 +78,10 @@ spec:
                 secretKeyRef:
                   name: {{ $fnstoreSecret }}
                   key: secretkey
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
   volumeClaimTemplates:
     - metadata:
         name: data

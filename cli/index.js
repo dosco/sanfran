@@ -136,17 +136,9 @@ function handleActions(action, callback) {
       type: 'input',
       name: 'vars',
       message: 'Variables (key1=val1,key2=val2):',
-      default: '',
       when: function(args) {
         return action === "Create" || action === "Update";
       },
-      validate: function( value ) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Enter environment variables for the function';
-        }
-      }
     },
   ];
 

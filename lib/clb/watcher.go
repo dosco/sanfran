@@ -56,7 +56,7 @@ func (clb *Clb) podAdded(obj interface{}) {
 		op = naming.Delete
 	}
 
-	glog.Infof("[clb] [%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
+	glog.Infof("[clb] [%s / %s] Pod added / deleted\n", pod.Name, pod.Status.PodIP)
 
 	clb.updates[target] <- []*naming.Update{{Op: op, Addr: addr}}
 }

@@ -1,6 +1,6 @@
 ## Builder
 
-{{ $fnstoreSecret := printf "%s-%s" .Release.Name "fnstore-user" }}
+{{ $fnstoreSecret := printf "%s-%s" .Release.Name "sf-fnstore-user" }}
 
 apiVersion: apps/v1beta1
 kind: Deployment

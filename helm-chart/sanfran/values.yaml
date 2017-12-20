@@ -21,15 +21,11 @@ sidecar:
   tag: 0.3
 fnapi:
   tag: 0.3
-  persistence:
+  storage:
     size: 10Gi
 fnstore:
-  mode: standalone
-  replicas: 1
-  accessKey: pooraccesskey
-  secretKey: poorsecretkey
-  serviceType: ClusterIP
-  persistence:
+  tag: "RELEASE.2017-11-22T19-55-46Z"
+  storage:
     size: 10Gi
 fnstoreCache:
   tag: 0.3

@@ -19,7 +19,7 @@ spec:
     app: {{ template "sanfran.fullname" . }}
 
 ---
-{{ $fnstoreSecret := printf "%s-%s" .Release.Name "fnstore-user" }}
+{{ $fnstoreSecret := printf "%s-%s" .Release.Name "sf-fnstore-user" }}
 
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -86,8 +86,8 @@ spec:
     - metadata:
         name: data
         annotations:
-          {{- if .Values.fnapi.persistence.storageClass }}
-          volume.beta.kubernetes.io/storage-class: {{ .Values.fnapi.persistence.storageClass }}
+          {{- if .Values.fnapi.storage.class }}
+          volume.beta.kubernetes.io/storage-class: {{ .Values.fnapi.storage.class }}
           {{- else }}
           volume.alpha.kubernetes.io/storage-class: default
           {{- end }}
@@ -95,4 +95,4 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: {{ .Values.fnapi.persistence.size }}
+            storage: {{ .Values.fnapi.storage.size }}

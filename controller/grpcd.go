@@ -139,8 +139,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	}
 
 	if activateErr != nil {
-		glog.Errorf("[%s] [activateErr] ", name, activateErr.Error())
-		glog.Errorf("[%s / %s] %s\n", pod.GetName(), pod.Status.PodIP, err.Error())
+		glog.Errorf("[%s] [activateErr] %s", name, activateErr.Error())
 		return nil, err
 	}
 

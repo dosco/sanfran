@@ -48,7 +48,7 @@ func initServer(clientset *kubernetes.Clientset, port int) {
 		HostPrefix: getHelmRelease(),
 		Services: map[string]clb.Service{
 			"builder": clb.Service{Host: "sf-builder", Port: "grpc"},
-			"fnstore": clb.Service{Host: "fnstore", Port: "service"},
+			"fnstore": clb.Service{Host: "sf-fnstore", Port: "service"},
 		},
 	}
 	lb := clb.NewClb(clientset, clbCfg)

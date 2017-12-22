@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "sanfran.fullname" . }}-ing
+  name: {{ template "sanfran.fullname" . }}
   labels:
-    app: {{ template "sanfran.fullname" . }}-ing
+    app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -15,9 +15,9 @@ spec:
       paths:
       - path: /api
         backend:
-          serviceName: {{ .Release.Name }}-sf-apiproxy-svc
+          serviceName: {{ .Release.Name }}-sf-apiproxy
           servicePort: 80
       - path: /fn
         backend:
-          serviceName: {{ .Release.Name }}-sf-router-svc
+          serviceName: {{ .Release.Name }}-sf-router
           servicePort: 80

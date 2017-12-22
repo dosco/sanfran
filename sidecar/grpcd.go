@@ -21,10 +21,11 @@ import (
 )
 
 type server struct {
+	sync.Mutex
 	lastReqTS  time.Time
 	lastPingTS time.Time
+	activating bool
 	terminate  bool
-	mux        sync.Mutex
 }
 
 const (
@@ -51,6 +52,11 @@ func initServer(port int) {
 
 func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.ActivateResp, error) {
 	var err error
+
+	s.activating = true
+	defer func() {
+		s.activating = false
+	}()
 
 	if s.terminate {
 		return nil, fmt.Errorf("terminate = true")
@@ -97,11 +103,11 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 		return nil, fmt.Errorf("Function not restarting: %s", err.Error())
 	}
 
-	s.mux.Lock()
+	s.Lock()
 	t := time.Now()
 	s.lastReqTS = t
 	s.lastPingTS = t
-	s.mux.Unlock()
+	s.Unlock()
 
 	return &rpc.ActivateResp{}, nil
 }
@@ -156,9 +162,9 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 		resp.Header[k] = &rpc.ListOfString{Value: v}
 	}
 
-	s.mux.Lock()
+	s.Lock()
 	s.lastReqTS = time.Now()
-	s.mux.Unlock()
+	s.Unlock()
 
 	return &resp, nil
 }
@@ -169,6 +175,10 @@ type metrics struct {
 }
 
 func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.MetricsResp, error) {
+	if s.activating {
+		return &rpc.MetricsResp{Terminate: false}, nil
+	}
+
 	if s.terminate {
 		return &rpc.MetricsResp{Terminate: true}, nil
 	}
@@ -194,7 +204,7 @@ func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.Metrics
 		return nil, err
 	}
 
-	s.mux.Lock()
+	s.Lock()
 	t := time.Now()
 	resp := &rpc.MetricsResp{
 		LoadAvg:   m.LoadAvg,
@@ -206,7 +216,7 @@ func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.Metrics
 	if req.GetFromController() {
 		s.lastPingTS = t
 	}
-	s.mux.Unlock()
+	s.Unlock()
 
 	return resp, nil
 }

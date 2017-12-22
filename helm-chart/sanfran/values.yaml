@@ -6,21 +6,21 @@ k8s:
   services:
     type: "ClusterIP"
 nodeJS:
-  tag: 0.3
+  tag: 0.4
 router:
-  tag: 0.3
+  tag: 0.4
   instances: 1
 apiProxy:
-  tag: 0.3
+  tag: 0.4
   instances: 1
 controller:
-  tag: 0.3
+  tag: 0.4
   poolSize: 1
   instances: 1
 sidecar:
-  tag: 0.3
+  tag: 0.4
 fnapi:
-  tag: 0.3
+  tag: 0.4
   storage:
     size: 10Gi
 fnstore:
@@ -28,11 +28,11 @@ fnstore:
   storage:
     size: 10Gi
 fnstoreCache:
-  tag: 0.3
+  tag: 0.4
   instances: 1
 builder:
-  tag: 0.3
+  tag: 0.4
   instances: 1
 janitor:
-  tag: 0.3
+  tag: 0.4
   schedule: "*/30 * * * *"

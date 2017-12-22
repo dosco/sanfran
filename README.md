@@ -116,9 +116,14 @@ module.exports = {
 
 While SanFran seems pretty simple, underneath it is designed to be a scalable and high performance engine to run your functions on.
 
+## Why Serverless Functions
+
+Before serverless functions one had to build and run an entire service that constantly consumed resources even with not in use. Using serverless functions allows you to break down your services into functions which only consume resources while in
+use. This means your Kubernetes cluster sees higher efficiency and you can run many more functions on a cluster than you could services. This results in better use of your cluster and a bigger bang for your buck.
+
 ## Performance Benchmarks
 
-I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on a warmed up Minikube. Initial basic testing has shown that our design provides the high performance we aim for with this project.
+I use [Vegeta](https://github.com/tsenart/vegeta) a HTTP load testing tool and library for benchmarking cold-start performance on Minikube. Initial basic testing has shown that our design provides the high performance we aim for with this project.
 
 ```console
 $ echo "GET http://10.0.0.170/fn/headers?a=hello&b=world" | vegeta attack -insecure -duration=15s | vegeta report -reporter='hist[6ms,8ms,10ms,15ms,20ms]'

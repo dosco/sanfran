@@ -29,7 +29,7 @@ func main() {
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
+	host := "%s-sf-fnapi-0.%s-sf-fnapi"
 	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
 	fnapiHostPort := net.JoinHostPort(host, "8080")
 
@@ -46,7 +46,8 @@ func main() {
 	})
 	serveSwaggerUI(mux)
 
-	glog.Infof("SanFran/API-Proxy HTTP Service Listening on :%d\n", port)
+	glog.Infof("SanFran/API-Proxy HTTP Service Listening on: %d\n", port)
+	glog.Infof("API Service: %s\n", fnapiHostPort)
 
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 	if err != nil {

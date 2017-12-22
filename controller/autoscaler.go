@@ -110,13 +110,21 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 			glog.Error(err.Error())
 		}
 
-		glog.Infof("[%s / %s] %s\n", pod.Name, pod.Status.PodIP, resp)
+		//glog.Infof("[%s / %s] %s\n", pod.Name, pod.Status.PodIP, resp)
 	}
 }
 
 func functionScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
-	if resp.Terminate || resp.LastReq == 0 || resp.LastReq > 20 {
-		glog.Infof("[%s / %s] Removed function label (%f)\n", pod.Name, pod.Status.PodIP, resp.LastReq)
+	if resp.Terminate || resp.LastReq > 20 {
+		var reason string
+
+		if resp.Terminate {
+			reason = "Terminate == true"
+		} else if resp.LastReq > 20 {
+			reason = "LastReq > 20"
+		}
+
+		glog.Infof("[%s / %s] Deactivate, %s\n", pod.Name, pod.Status.PodIP, reason)
 
 		delete(pod.Labels, "function")
 		delete(pod.Annotations, "version")
@@ -132,10 +140,10 @@ func functionScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 
 func podScalingLogic(resp *sidecar.MetricsResp, pod *v1.Pod) error {
 	if resp.Terminate {
-		return deletePod(pod, "Marked for termination")
+		return deletePod(pod, "Terminate == true")
 	}
 
-	if (resp.LastReq == 0 || resp.LastReq > 300) && totalReadyPodCount > podPoolSize {
+	if resp.LastReq > 300 && totalReadyPodCount > podPoolSize {
 		msg := "Scaling down from %d pods (Pool Size: %d)"
 		return deletePod(pod, fmt.Sprintf(msg, totalReadyPodCount, podPoolSize))
 	}
@@ -153,7 +161,7 @@ func deletePod(pod *v1.Pod, reason string) error {
 	options := &metav1.DeleteOptions{}
 	err := clientset.CoreV1().Pods(getNamespace()).Delete(pod.Name, options)
 
-	glog.Infof("[%s / %s] Deleting pod (%s)\n", pod.Name, pod.Status.PodIP, reason)
+	glog.Infof("[%s / %s] Deleting pod, %s\n", pod.Name, pod.Status.PodIP, reason)
 
 	return err
 }

@@ -3,9 +3,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "sanfran.fullname" . }}-cm
+  name: {{ template "sanfran.fullname" . }}-config
   labels:
-    app: {{ template "sanfran.fullname" . }}-cm
+    app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -67,9 +67,9 @@ spec:
                 fieldRef:
                   fieldPath: metadata.uid
           volumeMounts:
-            - name: config-volume
+            - name: controller-config
               mountPath: /etc/sanfran-config
       volumes:
-        - name: config-volume
+        - name: controller-config
           configMap:
-            name: {{ template "sanfran.fullname" . }}-cm
+            name: {{ template "sanfran.fullname" . }}-config

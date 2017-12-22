@@ -1,13 +1,13 @@
 ## Functions API Code Cache Service
 
-{{ $fnstoreService := printf "%s-fnstore-svc.%s.svc.cluster.local:9000" .Release.Name .Release.Namespace }}
+{{ $fnstoreService := printf "%s-sf-fnstore.%s.svc.cluster.local:9000" .Release.Name .Release.Namespace }}
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "sanfran.fullname" . }}-cm
+  name: {{ template "sanfran.fullname" . }}-config
   labels:
-    app: {{ template "sanfran.fullname" . }}-cm
+    app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -15,6 +15,8 @@ data:
   nginx.conf: |-
     pid /dev/null;
     worker_processes auto;
+    error_log stderr;
+
     events {
       worker_connections 1024;
     }
@@ -24,7 +26,6 @@ data:
 
       server {
         access_log /dev/null;
-        error_log /dev/null;
 
         listen 8080;
 
@@ -34,7 +35,7 @@ data:
           expires -1;
           add_header Cache-Control "no-store";
 
-          resolver 10.0.0.10 valid=10s ipv6=off;
+          resolver 127.0.0.1:8053 ipv6=off;
           resolver_timeout 5s;
 
           proxy_cache fncache;
@@ -85,6 +86,14 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
       containers:
+        - name: dnsmasq
+          image: "janeczku/go-dnsmasq:release-1.0.7"
+          args:
+            - --listen
+            - "127.0.0.1:8053"
+            - --append-search-domains
+            - --hostsfile=/etc/hosts
+            - --verbose
         - name: nginx
           image: nginx:alpine
           securityContext:
@@ -105,4 +114,4 @@ spec:
             sizeLimit: "100Mi"
         - name: nginx-conf
           configMap:
-            name: {{ template "sanfran.fullname" . }}-cm
+            name: {{ template "sanfran.fullname" . }}-config

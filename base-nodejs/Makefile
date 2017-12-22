@@ -1,4 +1,4 @@
-image = dosco/sanfran-nodejs:0.3
+image = dosco/sanfran-nodejs:0.4
 
 docker:
 	docker build -t $(image) .

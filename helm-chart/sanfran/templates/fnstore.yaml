@@ -3,14 +3,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "sanfran.fullname" . }}-svc
+  name: {{ template "sanfran.fullname" . }}
   labels:
-    app: {{ template "sanfran.fullname" . }}-svc
+    app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  type: ClusterIP
   clusterIP: None
   ports:
     - name: service
@@ -29,7 +28,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  serviceName: {{ template "sanfran.fullname" . }}-svc
+  serviceName: {{ template "sanfran.fullname" . }}
   replicas: 1
   selector:
     matchLabels:
@@ -49,7 +48,7 @@ spec:
             secretName: {{ template "sanfran.fullname" . }}-user
         - name: minio-server-config
           configMap:
-            name: {{ template "sanfran.fullname" . }}-config-cm
+            name: {{ template "sanfran.fullname" . }}-config
         - name: podinfo
           downwardAPI:
             items:
@@ -119,7 +118,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "sanfran.fullname" . }}-config-cm
+  name: {{ template "sanfran.fullname" . }}-config
   labels:
     app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

@@ -39,9 +39,11 @@ func watchPods(clientset *kubernetes.Clientset) cache.Indexer {
 		&v1.Pod{},
 		resyncPeriod,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    podAdded,
-			DeleteFunc: podDeleted,
-			UpdateFunc: podUpdated,
+			AddFunc:    process,
+			DeleteFunc: process,
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				process(newObj)
+			},
 		},
 		cache.Indexers{"name": nameIndexFunc},
 	)
@@ -60,14 +62,9 @@ func nameIndexFunc(obj interface{}) ([]string, error) {
 	return []string{meta.GetName()}, nil
 }
 
-func podAdded(obj interface{}) {
+func process(obj interface{}) {
 	pod, ok := obj.(*v1.Pod)
 	if !ok {
-		return
-	}
-
-	if pod.GetDeletionTimestamp() != nil {
-		podDeleted(pod)
 		return
 	}
 
@@ -75,33 +72,24 @@ func podAdded(obj interface{}) {
 		return
 	}
 
+	if pod.Annotations != nil {
+		_, locked := pod.Annotations["locked"]
+		aliveFor := time.Now().Sub(pod.GetCreationTimestamp().Time)
+
+		if locked && aliveFor > 1*time.Minute {
+			delete(pod.Annotations, "locked")
+		}
+	}
+
 	mux.Lock()
-	if _, ok := podSet[pod.Name]; !ok {
+	if pod.GetDeletionTimestamp() != nil {
+		if _, ok := podSet[pod.Name]; ok {
+			delete(podSet, pod.Name)
+		}
+	} else {
 		podSet[pod.Name] = struct{}{}
 	}
 	mux.Unlock()
-
-	//glog.Infof("[%s / %s] Pod added / updated\n", pod.Name, pod.Status.PodIP)
-
-}
-
-func podDeleted(obj interface{}) {
-	pod, ok := obj.(*v1.Pod)
-	if !ok {
-		return
-	}
-
-	//glog.Infof("[%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
-
-	mux.Lock()
-	if _, ok := podSet[pod.Name]; ok {
-		delete(podSet, pod.Name)
-	}
-	mux.Unlock()
-}
-
-func podUpdated(oldObj, newObj interface{}) {
-	podAdded(newObj)
 }
 
 func listFunc(options metav1.ListOptions) (runtime.Object, error) {
@@ -119,11 +107,7 @@ func watchFunc(options metav1.ListOptions) (watch.Interface, error) {
 }
 
 func verifyPodReady(pod *v1.Pod) bool {
-	var locked, ipAssigned, containersRunning bool
-
-	if pod.Annotations != nil {
-		_, locked = pod.Annotations["locked"]
-	}
+	var ipAssigned, containersRunning bool
 
 	ipAssigned = len(pod.Status.PodIP) != 0
 
@@ -131,7 +115,7 @@ func verifyPodReady(pod *v1.Pod) bool {
 		pod.Status.ContainerStatuses[0].State.Running != nil &&
 		pod.Status.ContainerStatuses[1].State.Running != nil
 
-	return !locked && ipAssigned && containersRunning
+	return ipAssigned && containersRunning
 }
 
 func getNextPod() *v1.Pod {

@@ -15,8 +15,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	opAdd = "Add"
+	opDel = "Del"
+)
+
 func (clb *Clb) watchPods() {
-	resyncPeriod := 1 * time.Minute
+	resyncPeriod := 10 * time.Minute
 
 	//Setup an informer to call functions when the watchlist changes
 	clb.indexer, clb.controller = cache.NewIndexerInformer(
@@ -27,9 +32,11 @@ func (clb *Clb) watchPods() {
 		&v1.Pod{},
 		resyncPeriod,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    clb.podAdded,
-			DeleteFunc: clb.podDeleted,
-			UpdateFunc: clb.podUpdated,
+			AddFunc:    clb.process,
+			DeleteFunc: clb.process,
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				clb.process(newObj)
+			},
 		},
 		cache.Indexers{},
 	)
@@ -38,45 +45,26 @@ func (clb *Clb) watchPods() {
 	go clb.controller.Run(stop)
 }
 
-func (clb *Clb) podAdded(obj interface{}) {
+func (clb *Clb) process(obj interface{}) {
 	pod, ok := obj.(*v1.Pod)
 	if !ok {
 		return
 	}
 
-	if verifyPodReady(pod) == false {
-		return
-	}
-
 	target := pod.Labels["app"]
 	addr := hostPort(pod, clb.ports[target])
-	op := naming.Add
+	opn, op := opAdd, naming.Add
 
 	if pod.GetDeletionTimestamp() != nil {
-		op = naming.Delete
+		opn, op = opDel, naming.Delete
 	}
 
-	glog.Infof("[clb] [%s / %s] Pod added / deleted\n", pod.Name, pod.Status.PodIP)
-
-	clb.updates[target] <- []*naming.Update{{Op: op, Addr: addr}}
-}
-
-func (clb *Clb) podDeleted(obj interface{}) {
-	pod, ok := obj.(*v1.Pod)
-	if !ok {
+	if op != naming.Delete && verifyPodReady(pod) == false {
 		return
 	}
 
-	target := pod.Labels["app"]
-	addr := hostPort(pod, clb.ports[target])
-
-	glog.Infof("[clb] [%s / %s] Pod removed\n", pod.Name, pod.Status.PodIP)
-
-	clb.updates[target] <- []*naming.Update{{Op: naming.Delete, Addr: addr}}
-}
-
-func (clb *Clb) podUpdated(oldObj, newObj interface{}) {
-	clb.podAdded(newObj)
+	glog.Infof("[clb] %s, %s, %s, %s\n", target, pod.Name, pod.Status.PodIP, opn)
+	clb.updates[target] <- []*naming.Update{{Op: op, Addr: addr}}
 }
 
 func (clb *Clb) listFunc(options metav1.ListOptions) (runtime.Object, error) {

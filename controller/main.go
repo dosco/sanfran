@@ -44,7 +44,7 @@ func main() {
 		glog.Fatalln(err.Error())
 	}
 
-	host := "%s-sf-fnapi-0.%s-sf-fnapi-svc"
+	host := "%s-sf-fnapi-0.%s-sf-fnapi"
 	host = fmt.Sprintf(host, getHelmRelease(), getHelmRelease())
 	fnapiClient = fnapi.NewFnAPIClient(clientConn(host, "8080"))
 

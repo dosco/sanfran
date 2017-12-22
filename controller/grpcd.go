@@ -55,7 +55,7 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 	glog.Infof("[%s] Info: %v\n", name, fn)
 
 	version := strconv.FormatInt(fn.GetVersion(), 10)
-	codePath := functionFilename(fn.Name, fn.Lang, fn.Version)
+	codePath := functionFilename(fn.GetName(), fn.GetLang(), fn.GetVersion())
 
 	pod := getNextPod()
 
@@ -63,11 +63,9 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 		if pod, err = createFunctionPod(false); err != nil {
 			return nil, err
 		}
-		glog.Infof("[%s / %s / %s:%s] Creating a new pod\n", pod.Name,
-			pod.Status.PodIP, name, version)
+		glog.Infof("[%s] Created Pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
 	} else {
-		glog.Infof("[%s / %s / %s:%s] Found a pod to use\n", pod.Name,
-			pod.Status.PodIP, name, version)
+		glog.Infof("[%s] Existing Pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
 	}
 
 	pod, err = activateFunctionPod(name, version, codePath, pod)
@@ -75,10 +73,7 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 		return nil, err
 	}
 
-	glog.Infof("[%s / %s / %s:%s] Activated pod\n", pod.Name,
-		pod.Status.PodIP, name, version)
-
-	glog.Flush()
+	glog.Infof("[%s] Activated pod\n", name)
 
 	return &controller.NewFunctionPodResp{
 		PodName: pod.Name,
@@ -102,44 +97,33 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 
 	addr, err := fncacheLB.Get()
 	if err != nil {
-		glog.Errorf("[%s] [fncacheLB.Get] ", name, err.Error())
+		glog.Errorf("[%s] [fncacheLB.Get] %s", name, err.Error())
 		return nil, err
 	}
 	codeLink := fmt.Sprintf("http://%s%s", addr.Addr, codePath)
-	glog.Infof("[%s / %s] Activating pod, %s\n", pod.GetName(), pod.Status.PodIP, codeLink)
+	glog.Infof("[%s] Fetching function, %s\n", name, codeLink)
 
 	req := sidecar.ActivateReq{Link: codeLink}
-	_, activateErr := sidecarClient.Activate(ctx, &req)
+
+	if _, err := sidecarClient.Activate(ctx, &req); err != nil {
+		glog.Errorf("[%s] [activateErr] %s", name, err.Error())
+		return nil, err
+	}
 
 	if pod.Annotations == nil {
 		pod.Annotations = make(map[string]string)
 	}
 
-	upNeeded := false
-
 	if _, ok := pod.Annotations["locked"]; ok {
 		delete(pod.Annotations, "locked")
-		upNeeded = true
 	}
 
-	if activateErr == nil {
-		pod.Annotations["version"] = version
-		pod.Labels["function"] = name
-		upNeeded = true
-	}
+	pod.Annotations["version"] = version
+	pod.Labels["function"] = name
 
-	var updatedPod *v1.Pod
-
-	if upNeeded {
-		updatedPod, err = clientset.CoreV1().Pods(getNamespace()).Update(pod)
-		if err != nil {
-			glog.Errorf("[%s] [clientset.Update] ", name, err.Error())
-			return nil, err
-		}
-	}
-
-	if activateErr != nil {
-		glog.Errorf("[%s] [activateErr] %s", name, activateErr.Error())
+	updatedPod, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
+	if err != nil {
+		glog.Errorf("[%s] [clientset.Update] %s", name, err.Error())
 		return nil, err
 	}
 

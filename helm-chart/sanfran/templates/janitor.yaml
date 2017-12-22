@@ -3,9 +3,9 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ template "sanfran.fullname" . }}-cron
+  name: {{ template "sanfran.fullname" . }}
   labels:
-    app: {{ template "sanfran.fullname" . }}-cron
+    app: {{ template "sanfran.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

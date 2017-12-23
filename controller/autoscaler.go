@@ -66,6 +66,7 @@ func scalePods() (*v1.PodList, error) {
 		if !hasExitedContainers(pod) && !isActivatedPod(pod) {
 			totalReadyPodCount++
 		}
+
 		autoScalePods <- &list.Items[i]
 	}
 
@@ -94,9 +95,26 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 			continue
 		}
 
+		if pod.Annotations != nil {
+			_, locked := pod.Annotations["locked"]
+			aliveFor := time.Now().Sub(pod.GetCreationTimestamp().Time)
+
+			if locked && aliveFor > 1*time.Minute {
+				delete(pod.Annotations, "locked")
+
+				_, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
+				if err != nil {
+					glog.Errorf("%s, %s", pod.GetName(), err.Error())
+					continue
+				}
+			} else if locked {
+				continue
+			}
+		}
+
 		resp, err := fetchMetrics(pod)
 		if err != nil {
-			glog.Warning(err.Error())
+			glog.Warningf("%s, %s", pod.GetName(), err.Error())
 			continue
 		}
 

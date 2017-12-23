@@ -12,7 +12,7 @@ default:
 docker:
 	cd cli && npm install
 	cd demo && npm install
-	cd base-nodejs && npm install && make docker
+	cd base-nodejs && make docker
 	cd fnapi && make docker
 	cd builder && make docker
 	cd sidecar && make docker
@@ -22,7 +22,7 @@ docker:
 	cd janitor && make docker
 
 docker-push:
-	cd base-nodejs && npm install && make docker-push
+	cd base-nodejs && make docker-push
 	cd fnapi && make docker-push
 	cd builder && make docker-push
 	cd sidecar && make docker-push

@@ -86,7 +86,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	podHostPort := fmt.Sprintf("%s:8080", pod.Status.PodIP)
 	conn, err := grpc.Dial(podHostPort, grpc.WithInsecure())
 	if err != nil {
-		glog.Errorf("[%s] [grpc.Dial] ", name, err.Error())
+		glog.Errorf("[%s] %s", name, err.Error())
 		return nil, err
 	}
 	defer conn.Close()
@@ -97,7 +97,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 
 	addr, err := fncacheLB.Get()
 	if err != nil {
-		glog.Errorf("[%s] [fncacheLB.Get] %s", name, err.Error())
+		glog.Errorf("[%s] %s", name, err.Error())
 		return nil, err
 	}
 	codeLink := fmt.Sprintf("http://%s%s", addr.Addr, codePath)
@@ -106,7 +106,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	req := sidecar.ActivateReq{Link: codeLink}
 
 	if _, err := sidecarClient.Activate(ctx, &req); err != nil {
-		glog.Errorf("[%s] [activateErr] %s", name, err.Error())
+		glog.Errorf("[%s] %s", name, err.Error())
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 
 	updatedPod, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
 	if err != nil {
-		glog.Errorf("[%s] [clientset.Update] %s", name, err.Error())
+		glog.Errorf("[%s] %s", name, err.Error())
 		return nil, err
 	}
 

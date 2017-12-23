@@ -91,7 +91,7 @@ spec:
           args:
             - --listen
             - "127.0.0.1:8053"
-            - --append-search-domains
+            - --enable-search
             - --hostsfile=/etc/hosts
             - --verbose
         - name: nginx

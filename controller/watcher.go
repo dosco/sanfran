@@ -72,22 +72,19 @@ func process(obj interface{}) {
 		return
 	}
 
-	if pod.Annotations != nil {
-		_, locked := pod.Annotations["locked"]
-		aliveFor := time.Now().Sub(pod.GetCreationTimestamp().Time)
-
-		if locked && aliveFor > 1*time.Minute {
-			delete(pod.Annotations, "locked")
-		}
-	}
-
 	mux.Lock()
 	if pod.GetDeletionTimestamp() != nil {
 		if _, ok := podSet[pod.Name]; ok {
 			delete(podSet, pod.Name)
 		}
 	} else {
+		if pod.Annotations != nil {
+			if _, ok := pod.Annotations["locked"]; ok {
+				return
+			}
+		}
 		podSet[pod.Name] = struct{}{}
+
 	}
 	mux.Unlock()
 }

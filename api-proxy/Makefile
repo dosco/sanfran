@@ -7,7 +7,8 @@ default: fnapi.swagger.json
 	go build -o build/sanfran-api-proxy .
 
 default.linux: fnapi.swagger.json
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/sanfran-api-proxy .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/sanfran-api-proxy .
+	upx -9 build/sanfran-api-proxy
 
 run: fnapi.swagger.json
 	go run *.go -logtostderr

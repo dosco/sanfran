@@ -1,4 +1,4 @@
-FROM node:9-alpine
+FROM mhart/alpine-node:base-9
 
 ENV TINI_VERSION v0.16.1-sf
 ADD https://github.com/dosco/tini/releases/download/${TINI_VERSION}/tini-static /tini
@@ -8,15 +8,14 @@ ENTRYPOINT ["/tini", "-r", "--"]
 ARG NODE_ENV
 ENV NODE_ENV $NODE_ENV
 
-RUN mkdir -p /app
+RUN mkdir -p /app/node_modules
 WORKDIR /app
 
-COPY package.json /app
-RUN npm install && npm cache clean --force
+COPY node_modules /app/node_modules/
 COPY server.js /app/
 
 VOLUME [ "/shared" ]
 
-CMD ["/usr/local/bin/node", "server.js"]
+CMD ["/usr/bin/node", "server.js", "--max-old-space-size=128"]
 
 EXPOSE 8081

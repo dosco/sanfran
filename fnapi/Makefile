@@ -4,7 +4,8 @@ default: rpc.pb.go fnapi.swagger.json data.pb.go
 	go build -o build/sanfran-fnapi .
 
 default.linux: rpc.pb.go fnapi.swagger.json data.pb.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/sanfran-fnapi .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/sanfran-fnapi .
+	upx -9 build/sanfran-fnapi
 
 run: rpc.pb.go rpc.pb.gw.go data.pb.go
 	go run *.go -logtostderr

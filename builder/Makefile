@@ -4,7 +4,8 @@ default: rpc.pb.go
 	go build -o build/sanfran-builder .
 
 default.linux: rpc.pb.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/sanfran-builder .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/sanfran-builder .
+	upx -9 build/sanfran-builder
 
 run: rpc.pb.go
 	SANFRAN_BUILDER_STORAGE_PATH=/tmp \

@@ -51,7 +51,7 @@ Then compile and install SanFran
 ```console
 $ go get https://github.com/dosco/sanfran.git
 $ cd $GOPATH/src/github.com/dosco/sanfran
-$ brew install jq
+$ brew install jq upx
 $ glide install
 $ make docker
 $ helm install ./helm-chart/sanfran/

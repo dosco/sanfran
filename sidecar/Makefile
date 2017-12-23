@@ -4,7 +4,7 @@ default: rpc.pb.go
 	go build -o build/sanfran-sidecar .
 
 default.linux: rpc.pb.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/sanfran-sidecar .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/sanfran-sidecar .
 
 run: rpc.pb.go
 	go run *.go -logtostderr

@@ -135,7 +135,7 @@ func executeRespToHttp(resp *sidecar.ExecuteResp, w http.ResponseWriter) error {
 }
 
 func newFunctionPod(name string) (*controller.NewFunctionPodResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	req := &controller.NewFunctionPodReq{Name: name}

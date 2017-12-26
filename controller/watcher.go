@@ -117,7 +117,6 @@ func verifyPodReady(pod *v1.Pod) bool {
 
 func getNextPod() *v1.Pod {
 	mux.Lock()
-	defer mux.Unlock()
 
 	for podName, _ := range podSet {
 		if _, ok := podSet[podName]; !ok {
@@ -126,7 +125,7 @@ func getNextPod() *v1.Pod {
 
 		objList, err := podIndexer.ByIndex("name", podName)
 		if err != nil {
-			glog.Errorln(err.Error())
+			glog.Error(err.Error())
 			continue
 		}
 
@@ -136,9 +135,11 @@ func getNextPod() *v1.Pod {
 
 		if pod, ok := objList[0].(*v1.Pod); ok {
 			delete(podSet, podName)
+			mux.Unlock()
 			return pod
 		}
 	}
+	mux.Unlock()
 
 	return nil
 }

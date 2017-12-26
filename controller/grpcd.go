@@ -60,16 +60,21 @@ func (s *server) NewFunctionPod(ctx context.Context, req *controller.NewFunction
 	pod := getNextPod()
 
 	if pod == nil {
+		glog.Infof("[%s] Creating pod\n", name)
+
 		if pod, err = createFunctionPod(false); err != nil {
+			glog.Errorf("[%s] %s", name, err.Error())
 			return nil, err
 		}
-		glog.Infof("[%s] Created Pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
+		glog.Infof("[%s] Created pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
+
 	} else {
-		glog.Infof("[%s] Existing Pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
+		glog.Infof("[%s] Existing pod, %s, %s\n", name, pod.Name, pod.Status.PodIP)
 	}
 
 	pod, err = activateFunctionPod(name, version, codePath, pod)
 	if err != nil {
+		glog.Errorf("[%s] %s", name, err.Error())
 		return nil, err
 	}
 
@@ -92,7 +97,7 @@ func activateFunctionPod(name, version, codePath string, pod *v1.Pod) (*v1.Pod, 
 	defer conn.Close()
 
 	sidecarClient := sidecar.NewSidecarClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	addr, err := fncacheLB.Get()

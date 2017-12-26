@@ -1,4 +1,4 @@
-image = dosco/sanfran-sidecar:0.4
+image = dosco/sanfran-sidecar:0.45
 
 default: rpc.pb.go
 	go build -o build/sanfran-sidecar .

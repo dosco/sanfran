@@ -14,11 +14,11 @@ apiProxy:
   tag: 0.4
   instances: 1
 controller:
-  tag: 0.4
+  tag: 0.42
   poolSize: 1
   instances: 1
 sidecar:
-  tag: 0.4
+  tag: 0.45
 fnapi:
   tag: 0.4
   storage:

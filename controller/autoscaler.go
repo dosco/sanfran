@@ -104,7 +104,7 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 
 				_, err := clientset.CoreV1().Pods(getNamespace()).Update(pod)
 				if err != nil {
-					glog.Errorf("%s, %s", pod.GetName(), err.Error())
+					glog.Errorf("%s, %s, %s", pod.GetName(), pod.Status.PodIP, err.Error())
 					continue
 				}
 			} else if locked {
@@ -114,7 +114,7 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 
 		resp, err := fetchMetrics(pod)
 		if err != nil {
-			glog.Warningf("%s, %s", pod.GetName(), err.Error())
+			glog.Warningf("%s, %s, %s", pod.GetName(), pod.Status.PodIP, err.Error())
 			continue
 		}
 
@@ -125,10 +125,10 @@ func autoScaleWorker(pods <-chan *v1.Pod) {
 		}
 
 		if err != nil {
-			glog.Error(err.Error())
+			glog.Errorf("%s, %s, %s", pod.GetName(), pod.Status.PodIP, err.Error())
 		}
 
-		//glog.Infof("[%s / %s] %s\n", pod.Name, pod.Status.PodIP, resp)
+		glog.Infof("[%s / %s] %s\n", pod.Name, pod.Status.PodIP, resp)
 	}
 }
 

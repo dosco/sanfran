@@ -125,7 +125,7 @@ func createFunctionPod(async bool) (*v1.Pod, error) {
 
 	var createdPod *v1.Pod
 
-	err = wait.Poll(50*time.Millisecond, 15*time.Second, func() (bool, error) {
+	err = wait.Poll(50*time.Millisecond, 10*time.Second, func() (bool, error) {
 		createdPod, err = clientset.CoreV1().Pods(getNamespace()).
 			Get(pod.Name, metav1.GetOptions{})
 

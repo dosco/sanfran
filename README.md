@@ -62,7 +62,7 @@ $ helm install ./helm-chart/sanfran/
 To add your JS function, use the `node cli/index.js` command. As an example run these commands to add a function that just returns http request headers.
 
 ```console
-$ node cli/index.js
+$ node cli
   ____                    _____
  / ___|    __ _   _ __   |  ___|  _ __    __ _   _ __
  \___ \   / _` | | '_ \  | |_    | '__|  / _` | | '_ \

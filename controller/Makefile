@@ -1,4 +1,4 @@
-image = dosco/sanfran-controller:0.4
+image = dosco/sanfran-controller:0.42
 
 default: rpc.pb.go
 	go build -o build/sanfran-controller .

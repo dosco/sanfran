@@ -30,7 +30,7 @@ type server struct {
 
 const (
 	orphanAfterMin = 10
-	appURLPrefix   = "http://localhost:8081"
+	appURLPrefix   = "http://127.0.0.1:8081"
 	funcPath       = "/shared/func"
 )
 
@@ -46,7 +46,7 @@ func initServer(port int) {
 
 	rpc.RegisterSidecarServer(g, server)
 
-	glog.Infof("SanFran/Sidecar Service Listening on :%d\n", port)
+	glog.Infof("SanFran/Sidecar Service Listening on: %d 1\n", port)
 	g.Serve(lis)
 }
 
@@ -59,11 +59,14 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 	}()
 
 	if s.terminate {
-		return nil, fmt.Errorf("terminate = true")
+		err := fmt.Errorf("terminate = true")
+		glog.Error(err.Error())
+		return nil, err
 	}
 
 	if err := resetFuncFolder(funcPath); err != nil {
 		s.terminate = true
+		glog.Error(err.Error())
 		return nil, err
 	}
 
@@ -77,6 +80,7 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 
 	if err != nil {
 		s.terminate = true
+		glog.Error(err.Error())
 		return nil, err
 	}
 
@@ -84,8 +88,10 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 	httpResp, err := http.Get(reqLink)
 	if err != nil {
 		s.terminate = true
-		return nil, err
+		glog.Error(err.Error())
+		return nil, fmt.Errorf("Activate failed: %s", err.Error())
 	}
+
 	defer httpResp.Body.Close()
 
 	if httpResp.StatusCode == 500 {
@@ -93,14 +99,19 @@ func (s *server) Activate(ctx context.Context, req *rpc.ActivateReq) (*rpc.Activ
 
 		body, err := ioutil.ReadAll(httpResp.Body)
 		if err != nil {
-			return nil, err
+			glog.Error(err.Error())
+			return nil, fmt.Errorf("Activate failed (500): %s", err.Error())
 		}
-		return nil, errors.New(string(body))
+		err = errors.New(string(body))
+		glog.Error(err.Error())
+		return nil, fmt.Errorf("Activate failed (500): %s", err.Error())
 	}
 
 	if ok, err := pingTillOk(); !ok || err != nil {
 		s.terminate = true
-		return nil, fmt.Errorf("Function not restarting: %s", err.Error())
+		err := fmt.Errorf("Activate failed (Timeout): %s", err.Error())
+		glog.Error(err.Error())
+		return nil, err
 	}
 
 	s.Lock()
@@ -127,6 +138,7 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 	httpReq, err := http.NewRequest(req.Method, url, bytes.NewReader(req.GetBody()))
 	if err != nil {
 		s.terminate = true
+		glog.Error(err.Error())
 		return nil, err
 	}
 
@@ -141,6 +153,7 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 	httpResp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		s.terminate = true
+		glog.Error(err.Error())
 		return nil, err
 	}
 	defer httpResp.Body.Close()
@@ -148,6 +161,7 @@ func (s *server) Execute(ctx context.Context, req *rpc.ExecuteReq) (*rpc.Execute
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		s.terminate = true
+		glog.Error(err.Error())
 		return nil, err
 	}
 
@@ -188,20 +202,23 @@ func (s *server) Metrics(ctx context.Context, req *rpc.MetricsReq) (*rpc.Metrics
 	httpResp, err := http.Get(reqLink)
 	if err != nil {
 		s.terminate = true
-		return nil, err
+		glog.Error(err.Error())
+		return nil, fmt.Errorf("Ping failed (Request): %s", err.Error())
 	}
 	defer httpResp.Body.Close()
 
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		s.terminate = true
-		return nil, err
+		glog.Error(err.Error())
+		return nil, fmt.Errorf("Ping failed (Body): %s", err.Error())
 	}
 
 	var m metrics
 	if err := json.Unmarshal(body, &m); err != nil {
 		s.terminate = true
-		return nil, err
+		glog.Error(err.Error())
+		return nil, fmt.Errorf("Ping failed (Json): %s", err.Error())
 	}
 
 	s.Lock()
@@ -242,7 +259,7 @@ func pingTillOk() (bool, error) {
 
 	reqLink := strings.Join([]string{appURLPrefix, "/api/ping"}, "")
 
-	wait.Poll(10*time.Millisecond, 450*time.Millisecond, func() (bool, error) {
+	wait.Poll(10*time.Millisecond, 3*time.Second, func() (bool, error) {
 		r, err = http.Head(reqLink)
 		return err == nil && r.StatusCode == 200, nil
 	})

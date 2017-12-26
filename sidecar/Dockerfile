@@ -1,4 +1,4 @@
-FROM scratch
+FROM mhart/alpine-node:base-9
 
 ADD build/sanfran-sidecar /
 WORKDIR /

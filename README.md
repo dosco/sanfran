@@ -1,5 +1,7 @@
 # SanFran: Serverless Functions for Kubernetes
 
+![GitHub release](https://img.shields.io/badge/cloud--native-enabled-blue.svg)
+
 Run your Javascript functions on Kubernetes in a high performance serverless engine.  Functions will only use resources when handling requests. Designed to minimize cold-start latency and scale horizontally for high traffic functions.
 
 - Runs any JavaScript function (with npm modules)
